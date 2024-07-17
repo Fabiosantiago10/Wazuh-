@@ -1,0 +1,46 @@
+<group name="kind,">
+    
+    <rule id="890000" level="0">
+        <decoded_as>json</decoded_as>
+            <field name="kind">admin#reports#activity</field>
+        <description></description>
+    </rule>
+    
+    <rule id="890001" level="0"> 
+        <if_sid>890000</if_sid>
+        <decoded_as>json</decoded_as>
+            <field name="name">storage_usage_update</field>
+        <description>Usuario $(actor.email) realizou uma atualização de armazenamento, cliente ID: $(id.customerId) </description>
+    </rule>
+    
+   <rule id="890002" level="0">
+        <if_sid>890000</if_sid>
+        <decoded_as>json</decoded_as>
+             <field name="name">CHANGE_PASSWORD</field>>
+        <description>Alteração de senhado do usuario: $(USER_EMAIL)</description>
+    </rule>
+    
+    <rule id="890003" level="0">
+        <if_sid>890000</if_sid>
+        <decoded_as>json</decoded_as>
+            <field name="name">download</field>
+            <field name="doc_type" type="pcre2" negate="no">.*exe</field>
+        <description>O usuario: $(actor.email), realizu um download de um aqurivo: $(doc_title)</description>
+    </rule>
+    
+     <rule id="890004" level="0">
+        <if_sid>890000</if_sid>
+        <decoded_as>json</decoded_as>
+         <field name="name">edit</field>>
+        <description>O usuario: $(owner), alterou um aqurivo: $(doc_title)</description>
+    </rule>
+    
+    <rule id="890005" level="12">
+        <if_sid>890000</if_sid>
+        <decoded_as>json</decoded_as>
+            <field name="target_users" type="pcre2" negate="yes">.*@nomadglobal.com</field>
+        <description>O usuario $(actor) realizou um convite para um e-mail que não esta no dominio da empresa: $(target_users)</description>
+    </rule>
+</group>
+
+
