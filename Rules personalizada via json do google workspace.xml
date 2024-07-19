@@ -41,6 +41,14 @@
             <field name="target_users" type="pcre2" negate="yes">.*@nomadglobal.com</field>
         <description>O usuario $(actor) realizou um convite para um e-mail que não esta no dominio da empresa: $(target_users)</description>
     </rule>
+
+    <rule id="890006" level="0">
+        <if_sid>890000</if_sid>
+        <decoded_as>json</decoded_as>
+             <field name="name">UNSUSPEND_USER</field>
+        <description>O usário $(actor.email) reativou: $(USER_EMAIL) que estava suspenso.</description>
+    </rule>
+
 </group>
 
 
