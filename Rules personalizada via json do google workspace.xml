@@ -1,54 +1,554 @@
-<group name="kind,">
+<!-- Modify it at your will. -->
+<!-- {"kind": "admin#reports#activity", "id": {"time": "2024-07-16T20:16:57.565Z", "uniqueQualifier": "-8014137876514702588", "applicationName": "calendar", "customerId": "C029tmng5"}, "etag": "\"a1jS4uOBOvokkvLImm7XBfjJDibmEEBPEGlwx1-6rsA/L_WjMCQWDaFTcu3efpDCDqqFFwc\"", "actor": {"email": "janaina.silva@nomadglobal.com", "profileId": "114850069904175680226"}, "ownerDomain": "nomadglobal.com", "ipAddress": "163.116.233.80", "events": [{"type": "event_change", "name": "create_event", "parameters": [{"name": "event_id", "value": "5fvc71noahedlpt6q5kl8fsmhb"}, {"name": "organizer_calendar_id", "value": "janaina.silva@nomadglobal.com"}, {"name": "calendar_id", "value": "janaina.silva@nomadglobal.com"}, {"name": "event_title", "value": "Pegar credencial Edu e Bruna "}, {"name": "is_recurring", "boolValue": false}, {"name": "recurring", "value": "no"}, {"name": "client_side_encrypted", "value": "no"}, {"name": "start_time", "intValue": "63856922400"}, {"name": "end_time", "intValue": "63856926000"}, {"name": "api_kind", "value": "web"}, {"name": "user_agent", "value": "Mozilla/5.0"}]}, {"type": "event_change", "name": "add_event_guest", "parameters": [{"name": "event_id", "value": "5fvc71noahedlpt6q5kl8fsmhb"}, {"name": "organizer_calendar_id", "value": "janaina.silva@nomadglobal.com"}, {"name": "calendar_id", "value": "janaina.silva@nomadglobal.com"}, {"name": "event_title", "value": "Pegar credencial Edu e Bruna "}, {"name": "is_recurring", "boolValue": false}, {"name": "recurring", "value": "no"}, {"name": "client_side_encrypted", "value": "no"}, {"name": "event_guest", "value": "felipe.cedano@nomadglobal.com"}, {"name": "api_kind", "value": "web"}, {"name": "user_agent", "value": "Mozilla/5.0"}]}, {"type": "event_change", "name": "change_event_guest_response", "parameters": [{"name": "event_id", "value": "5fvc71noahedlpt6q5kl8fsmhb"}, {"name": "organizer_calendar_id", "value": "janaina.silva@nomadglobal.com"}, {"name": "calendar_id", "value": "janaina.silva@nomadglobal.com"}, {"name": "event_title", "value": "Pegar credencial Edu e Bruna "}, {"name": "is_recurring", "boolValue": false}, {"name": "recurring", "value": "no"}, {"name": "client_side_encrypted", "value": "no"}, {"name": "event_guest", "value": "janaina.silva@nomadglobal.com"}, {"name": "event_response_status", "value": "accepted"}, {"name": "api_kind", "value": "web"}, {"name": "user_agent", "value": "Mozilla/5.0"}]}], "service": "calendar"} -->
+
+<group name="workspace,">
     
-    <rule id="890000" level="0">
+    <rule id="890000" level="4">
         <decoded_as>json</decoded_as>
-            <field name="kind">admin#reports#activity</field>
-        <description></description>
-    </rule>
-    
-    <rule id="890001" level="0"> 
-        <if_sid>890000</if_sid>
-        <decoded_as>json</decoded_as>
-            <field name="name">storage_usage_update</field>
-        <description>Usuario $(actor.email) realizou uma atualização de armazenamento, cliente ID: $(id.customerId) </description>
-    </rule>
-    
-   <rule id="890002" level="0">
-        <if_sid>890000</if_sid>
-        <decoded_as>json</decoded_as>
-             <field name="name">CHANGE_PASSWORD</field>>
-        <description>Alteração de senhado do usuario: $(USER_EMAIL)</description>
-    </rule>
-    
-    <rule id="890003" level="0">
-        <if_sid>890000</if_sid>
-        <decoded_as>json</decoded_as>
-            <field name="name">download</field>
-            <field name="doc_type" type="pcre2" negate="no">.*exe</field>
-        <description>O usuario: $(actor.email), realizu um download de um aqurivo: $(doc_title)</description>
-    </rule>
-    
-     <rule id="890004" level="0">
-        <if_sid>890000</if_sid>
-        <decoded_as>json</decoded_as>
-         <field name="name">edit</field>>
-        <description>O usuario: $(owner), alterou um aqurivo: $(doc_title)</description>
-    </rule>
-    
-    <rule id="890005" level="12">
-        <if_sid>890000</if_sid>
-        <decoded_as>json</decoded_as>
-            <field name="target_users" type="pcre2" negate="yes">.*@nomadglobal.com</field>
-        <description>O usuario $(actor) realizou um convite para um e-mail que não esta no dominio da empresa: $(target_users)</description>
+        <field name="kind">admin#reports#activity</field>
+        <description>Google Workspace: Criação de rule pendente</description>
     </rule>
 
-    <rule id="890006" level="0">
+    <!--Upgrade do armazenamento do google drive-->
+
+    <rule id="890001" level="12"> 
         <if_sid>890000</if_sid>
-        <decoded_as>json</decoded_as>
-             <field name="name">UNSUSPEND_USER</field>
-        <description>O usário $(actor.email) reativou: $(USER_EMAIL) que estava suspenso.</description>
+        <field name="name">^storage_usage_update</field>
+        <description>Usuario $(actor.email) realizou uma atualização de armazenamento.</description>
     </rule>
 
+    <!-- Alteração de senha de e-mail pelo adminsitrador -->
+   <rule id="890002" level="3">
+        <if_sid>890000</if_sid>
+         <field name="name">^CHANGE_PASSWORD</field>
+        <description>Google Workspace: O usuário $(actor.email) alterou a senha do usuário $(USER_EMAIL).</description>
+    </rule>
+
+    <!-- Donwloada de arquivos -->
+    
+    <rule id="890003" level="12">
+        <if_sid>890000</if_sid>
+        <field name="name">^download</field>
+        <description>O usuario: $(actor.email) realizou um download de um arquivo: $(doc_title).</description>
+    </rule>
+
+    <rule id="890004" level="3">
+        <if_sid>890003</if_sid>
+        <field name="doc_type" type="pcre2" negate="no">.*exe</field>
+        <description> Google workspace: O usuario: $(actor.email), realizou um download de um arquivo executavél: $(doc_title)</description>
+    </rule>
+
+    <!-- Alteração de arquivo no drive -->
+
+     <rule id="890005" level="12">
+        <if_sid>890000</if_sid>
+            <field name="name">^edit</field>
+        <description>Google workspace: O usuario: $(owner) efetuou uma alteração no arquivo: $(doc_title).</description>
+    </rule>
+    
+    <!-- Convite para e-mail externos  -->
+
+    <rule id="890006" level="3">
+        <if_sid>890000</if_sid>
+        <field name="target_users" type="pcre2" negate="yes">.*@nomadglobal.com</field>
+        <description>O usuario $(actor) realizou um convite para um e-mail que não esta no dominio da empresa: $(target_users).</description>
+    </rule>
+
+    <rule id="890007" level="3">
+        <if_sid>890000</if_sid>
+        <field name= "name" type="pcre2">^label_added_by_item_create</field>
+        <description>Google workspace: O usuario $(actor.email) criou o arquivo: $(doc_title), Tag $(label_title)</description>
+    </rule>
+    
+    <rule id="890008" level="3">
+        <if_sid>890000</if_sid>
+        <field name="name" type="pcre2">^view</field>
+        <description>Google workspace: O usuario: $(actor.email) acessou o arquivo: $(doc_title).$(doc_type)</description>
+        
+    </rule>
+        <rule id="890009" level="3">
+        <if_sid>890000</if_sid>
+              <field name="name" type="pcre2">^rename</field>
+        <description>Google workspace: O usuario: $(actor.email) renomeou o arquivo $(old_value) para $(new_value)</description>
+    </rule>
+    
+    <rule id="890010" level="3">
+        <if_sid>890000</if_sid>
+        <field name="id.applicationName" type="pcre2">^calendar</field>
+        <description>Google workspace: O usuario: $(actor.email) respondeu o evento $(event_title)</description>
+    </rule>
+    
+    <rule id="890011" level="3">
+        <if_sid>890010</if_sid>
+        <field name="event_response_status" type="pcre2">^accepted</field>
+        <description>Google workspace: O usuario: $(actor.email) aceitou o evento $(event_title).</description>
+    </rule>
+
+    
+    <rule id="890012" level="3">
+        <if_sid>890010</if_sid>
+        <field name="notification_type" type="pcre2">^reply_received</field>
+        <description>O usuario: $(actor.email) recebeu uma noticação no Google Calendar proviniente do email $(recipient_email).</description>
+    </rule>
+    
+   <rule id="890013" level="3">
+        <if_sid>890000</if_sid>
+        <field name="name" type="pcre2">^ALERT_CENTER_VIEW</field>
+        <description>Google workspace: O usuario $(actor.email) visualizou a central de alertas do administrador do Google, utilizando o ip $(ipAddress)</description>
+    </rule>
+    
+    <rule id="890014" level="10">
+        <if_sid>890000</if_sid>
+         <field name="type">^DELEGATED_ADMIN_SETTINGS</field>
+        <description>Google Workspace: O usuário $(actor.email) deu permissões de administrador para o usuário $(USER_EMAIL).</description>
+    </rule>
+    
+    
+    <rule id="890015" level="1">
+        <if_sid>890000</if_sid>
+        <field name="name" type="pcre2">^EMAIL_LOG_SEARCH</field>
+        <description>Google workspace: O usuario $(actor.email) efetuou uma pesquisa no histório de emails. Pesquisa: $(EMAIL_LOG_SEARCH_SENDER). </description>
+    </rule>
+
+    <rule id="890016" level="3">
+        <if_sid>890000</if_sid>
+        <field name="type" type="pcre2">^event_change</field>
+        <description>Google Workspace: O usuario: $(actor.email) alterou a resposta para o evento $(event_title).</description>
+    </rule>
+   
+    <rule id="890017" level="3">
+        <if_sid>890000</if_sid>
+        <field name="notification_type" type="pcre2">^reply_received</field>
+        <description>Google Workspace: Notificação Google Calendar recebida pelo usuário $(recipient_email).</description>
+    </rule>
+     
+    <rule id="890019" level="3">
+        <if_sid>890000</if_sid>
+              <field name="name" type="pcre2">notification_triggered</field>
+        <description>Google Workspace: Notificação novo evento Google Calendar recebida pelo usuário $(recipient_email).</description>
+    </rule>
+    
+     <!-- criadas em 23/07 -->
+     <rule id="890020" level="3">
+        <if_sid>890000</if_sid>
+         <field name="name">ADD_GROUP_MEMBER</field>
+        <description>Google Workspace: Usuário $(USER_EMAIL) adicionado ao grupo de email: $(GROUP_EMAIL).</description>
+    </rule>
+
+    
+    <rule id="890021" level="3">
+        <if_sid>890000</if_sid>
+         <field name="name">UNSUSPEND_USER</field>
+        <description>Google Workspace: O usuário $(actor.email) removeu a suspensão da a conta: $(USER_EMAIL)</description>
+    </rule>
+    
+    
+    <rule id="890022" level="3">
+        <if_sid>890000</if_sid>
+         <field name="name">USER_LICENSE_REVOKE</field>
+        <description>Google Workspace: A conta $(USER_EMAIL) teve a licença revogada.</description>
+    </rule>
+    
+     <rule id="890023" level="3">
+        <if_sid>890000</if_sid>
+         <field name="name">^DELETE_USER</field>
+        <description>Google Workspace: O usuário $(USER_EMAIL) foi excluído pelo usuário $(actor.email).</description>
+    </rule>
+    
+    <rule id="890024" level="3">
+        <if_sid>890000</if_sid>
+         <field name="name">SUSPEND_USER</field>
+        <description>Google Workspace: O usuário $(actor.email) suspendeu: $(USER_EMAIL)</description>
+    </rule>
+
+      <rule id="890025" level="3">
+        <if_sid>890000</if_sid>
+         <field name="name">REMOVE_GROUP_MEMBER</field>
+        <description>O usuário $(actor.email) removeu $(USER_EMAIL) do grupo de email: $(GROUP_EMAIL)</description>
+    </rule>
+    
+     <rule id="890026" level="3">
+        <if_sid>890000</if_sid>
+         <field name="name">CHANGE_GROUP_SETTING</field>
+        <description>O usuário $(actor.email) alterou as configurações do grupo de email: $(GROUP_EMAIL)</description>
+    </rule>
+    
+    <rule id="890027" level="3">
+        <if_sid>890000</if_sid>
+         <field name="name">CREATE_GROUP</field>
+        <description>O usuário $(actor.email) criou um grupo de email: $(GROUP_EMAIL)</description>
+    </rule>
+    
+   
+    <rule id="890028" level="3">
+        <if_sid>890000</if_sid>
+         <field name="name">SECURITY_CHART_DRILLDOWN</field>
+        <description>O usuário $(actor.email) realizou uma consulta no Chart $(CHART_NAME).</description>
+    </rule>
+    
+    <rule id="890029" level="3">
+        <if_sid>890000</if_sid>
+         <field name="name">CREATE_USER</field>
+        <description>Google Workspace: Usuário "$(USER_EMAIL)" criado pelo usuário $(actor.email).</description>
+    </rule>
+    
+    <rule id="890030" level="3">
+        <if_sid>890000</if_sid>
+         <field name="name">ADD_MOBILE_APPLICATION_TO_WHITELIST</field>
+        <description>Google Workspace: O aplicativo "$(MOBILE_APP_PACKAGE_ID)" adicionado a whitelist de apps pelo usuário $(actor.email).</description>
+    </rule>
+    
+    <rule id="890031" level="3">
+        <if_sid>890000</if_sid>
+        <field name="name" type="pcre2">ASSIGN_ROLE</field>
+        <description>Google Workspace: O usuario $(actor.email) efetuou uma alteração no perfil do usuario $(USER_EMAIL).</description>
+    </rule>
+    
+    <rule id="890032" level="3">
+        <if_sid>890000</if_sid>
+        <field name="name">MOVE_USER_TO_ORG_UNIT</field>
+        <description>Google Workspace: Usuário $(USER_EMAIL) movido para unidade organizacional: $(NEW_VALUE).</description>
+    </rule>
+    
+    <rule id="890033" level="3">
+        <if_sid>890000</if_sid>
+         <field name="name" type="pcre2">SUSPEND_USER</field>
+        <description>Google Workspace: O usuário $(actor.email) suspendeu a conta: $(USER_EMAIL)</description>
+    </rule>
+
+    <rule id="890034" level="3">
+        <if_sid>890000</if_sid>
+         <field name="name">UPDATE_GROUP_MEMBER</field>
+        <description>Google Workspace: O usuário $(USER_EMAIL) teve as permissões no grupo $(GROUP_EMAIL) alteradas.</description>
+    </rule>
+    
+    <rule id="890035" level="3">
+        <if_sid>890000</if_sid>
+         <field name="name">UPDATE_GROUP_MEMBER</field>
+        <description>Google Workspace: O usuário $(USER_EMAIL) teve as permissões no grupo $(GROUP_EMAIL) alteradas.</description>
+    </rule>
+    <!-- criadas em 23/07 -->
+        <rule id="890036" level="3">
+        <if_sid>890000</if_sid>
+            <field name="name">^password_edit</field>
+         <field name="type">password_change</field>
+         <field name="service">user_accounts</field>
+        <description>Google workspace: Usuário: $(actor.email) efetuou alteração de passoword</description>
+    </rule>
+    
+    <rule id="890037" level="3">
+        <if_sid>890000</if_sid>
+            <field name="name">^2sv_enroll</field>
+         <field name="type">2sv_change</field>
+         <field name="service">user_accounts</field>
+        <description>Google workspace: Usuário: $(actor.email) habilitou a verifação de duas etapas.</description>
+    </rule>
+    
+    
+    <rule id="890038" level="3">
+        <if_sid>890000</if_sid>        <field name="name">^2sv_disable</field>
+         <field name="type">2sv_change</field>
+        <field name="service">user_accounts</field>
+        <description>Google workspace: Usuário: $(actor.email) desabilitou a verifação de duas etapas.</description>
+    </rule>
+    
+    <rule id="890039" level="3">
+        <if_sid>890000</if_sid>        <field name="name">^view_document</field>
+         <field name="type">user_action</field>
+        <field name="service">vault</field>
+        <description>Google workspace: Usuário: $(actor.email) vizualizou um documento pelo google vault</description>
+    </rule>
+    
+      <rule id="890040" level="3">
+        <if_sid>890000</if_sid>        <field name="name">^view_investigation</field>
+         <field name="type">user_action</field>
+        <field name="service">vault</field>
+        <description>Google workspace: Usuário: $(actor.email) realizou uma investigação no vault</description>
+    </rule>
+      <!-- criadas em 27/07 -->
+
+   <rule id="890041" level="3">
+        <if_sid>890000</if_sid>        <field name="name">^activity</field>
+        <field name="type">auth</field>
+        <field name="service">token</field>
+        <description>Google workspace: O usuário com o e-mail: $(data.actor.email)fez uma solicitação à API do Google Drive para listar as alterações $(data.method_name) usando um cliente web identificado pela aplicação Netskope.</description>
+    </rule>
+  <rule id="890042" level="3">
+        <if_sid>890000</if_sid>
+        <field name="name">^authorize</field>
+        <field name="type">auth</field>
+        <field name="service">token</field>
+        <description>Google workspace: O e-mail $(data.actor.email) fez uma solicitação de autorização para a API do Google Drive usando um cliente web identificado pela aplicação Netskope. A solicitação incluiu o escopo $(data.scope
+), que permite acesso ao Google Drive.</description>
+    </rule>
+
+  <rule id="890043" level="3">
+        <if_sid>890000</if_sid> 
+        <field name="name">^DEVICE_SYNC_EVENT</field>
+        <field name="type">^device_updates</field>
+        <field name="service">mobile</field>
+        <description>Google workspace: O e-mail $(USER_EMAIL) sincronizou um dispositivo $(DEVICE_TYPE) $(DEVICE_MODEL) com a aplicação móvel associada ao Google Workspace.</description>
+    </rule>
+
+  <rule id="890044" level="3">
+        <if_sid>890000</if_sid>
+        <field name="name">^access_item_content</field>
+        <field name="type">^access</field>
+        <field name="service">drive</field>
+        <description>Google workspace: O  e-mail $(actor.email) acessou o conteúdo de uma planilha intitulada "$(doc_title)" no Google Sheets usando o método ($(api_method)). O documento é de propriedade do próprio usuário e está compartilhado internamente.</description>
+    </rule>
+    
+	<rule id="890045" level="3">
+        <if_sid>890000</if_sid>
+		<field name="name">^sheets_import_range</field>
+        <field name="type">^access</field>
+        <field name="service">drive</field>
+        <description>Google workspace: importação de intervalo de dado de uma planilha para outra no Google Sheets. O documento original, intitulado "$(doc_title)", é de propriedade de $(owner) e está acessível para pessoas dentro do domínio com o link.</description>
+    </rule>
+    
+	<rule id="890046" level="3">
+			<if_sid>890000</if_sid>
+			<field name="name">^delete</field>
+			<field name="type">^access</field>
+			<field name="service">drive</field>
+			<description>Google workspace: O "$(doc_title)", de propriedade de $(owner), foi excluído no Google Drive.</description>
+		</rule>
+
+	<rule id="890047" level="3">
+			<if_sid>890000</if_sid>
+			<field name="name">^sheets_import_url</field>
+			<field name="type">^access</field>
+			<field name="service">drive</field>
+			<description>Google workspace: importação de intervalo de dado de uma planilha para outra no Google Sheets. O documento original, intitulado "$(doc_title)", é de propriedade de $(owner) e está acessível para pessoas dentro do domínio com o link.(accessed_url)
+	</description>
+		</rule>
+
+    <rule id="890048" level="3">
+        <if_sid>890000</if_sid>
+        <field name="name">^activity</field>
+        <field name="type">auth</field>
+        <field name="service">token</field>
+        <description>Google workspace: O usuário com o e-mail: $(actor.email)fez uma solicitação à API do Google Drive para listar as alterações $(method_name) usando um cliente web identificado pela aplicação Netskope.</description>
+    </rule>
+  <rule id="890049" level="3">
+        <if_sid>890000</if_sid>
+        <field name="name">^authorize</field>
+        <field name="type">auth</field>
+        <field name="service">token</field>
+        <description>Google workspace: O e-mail $(actor.email) fez uma solicitação de autorização para a API do Google Drive usando um cliente web identificado pela aplicação Netskope. A solicitação incluiu o escopo $(scope), que permite acesso ao Google Drive.</description>
+    </rule>
+
+  <rule id="890050" level="3">
+        <if_sid>890000</if_sid>
+        <field name="name">^DEVICE_SYNC_EVENT</field>
+        <field name="type">^device_updates</field>
+        <field name="service">mobile</field>
+        <description>Google workspace: Oe-mail $(USER_EMAIL) sincronizou um dispositivo $(DEVICE_TYPE) $(DEVICE_MODEL) com a aplicação móvel associada ao Google Workspace.</description>
+    </rule>
+
+  <rule id="890051" level="3">
+        <if_sid>890000</if_sid>
+        <field name="name">^access_item_content</field>
+        <field name="type">^access</field>
+        <field name="service">drive</field>
+        <description>Google workspace: O  e-mail $(actor.email) acessou o conteúdo de uma planilha intitulada "$(doc_title)" no Google Sheets usando o método ($(api_method)). O documento é de propriedade do próprio usuário e está compartilhado internamente.</description>
+    </rule>
+<rule id="890052" level="3">
+        <if_sid>890000</if_sid>
+        <field name="name">^sheets_import_range</field>
+        <field name="type">^access</field>
+        <field name="service">drive</field>
+        <description>Google workspace: importação de intervalo de dado de uma planilha para outra no Google Sheets. O documento original, intitulado "$(doc_title)", é de propriedade de $(owner) e está acessível para pessoas dentro do domínio com o link.</description>
+    </rule>
+<rule id="890053" level="3">
+        <if_sid>890000</if_sid>
+        <field name="name">^delete</field>
+        <field name="type">^access</field>
+        <field name="service">drive</field>
+        <description>Google workspace: O "$(doc_title)", de propriedade de $(owner), foi excluído no Google Drive.</description>
+    </rule>
+
+<rule id="890052" level="3">
+        <if_sid>890000</if_sid>
+        <field name="name">^sheets_import_url</field>
+        <field name="type">^access</field>
+        <field name="service">drive</field>
+        <description>Google workspace: importação de intervalo de dado de uma planilha para outra no Google Sheets. O documento original, intitulado "$(doc_title)", é de propriedade de $(owner) e está acessível para pessoas dentro do domínio com o link.(accessed_url)
+</description>
+    </rule>
+
+  <rule id="890054" level="3">
+        <if_sid>890000</if_sid>
+        <field name="name">^login_success</field>
+        <field name="type">^login</field>
+        <field name="service">login</field>
+        <description>Google workspace: O e-mail $(actor.email) efetuou um login pelo IP: $(ipAddress) </description>
+    </rule>
+  <rule id="890055" level="3">
+        <if_sid>890000</if_sid>
+        <field name="name">^expire_access_request</field>
+        <field name="type">^access</field>
+        <field name="service">drive</field>
+        <description>Google workspace: A solicitação feita por $(target_user), expirou ao acesso ao $(doc_type) "$(doc_title)" </description>
+    </rule>
+  <rule id="890056" level="3">
+        <if_sid>890000</if_sid>
+        <field name="name">^access_url</field>
+        <field name="type">^access</field>
+        <field name="service">drive</field>
+        <description>Google workspace: o usuário $(actor.email) acessou uma URL específica "$(accessed_url)"</description>
+    </rule>
+
+    <rule id="890057" level="3">
+        <if_sid>890000</if_sid>
+        <field name="name">^change_user_access</field>
+        <field name="type">^acl_change</field>
+        <field name="service">drive</field>
+        <description>Google workspace: o usuário $(actor.email) liberou acesso ao e-mail $(target_user) $(owner) do arquivo $(doc_title)  </description>
+    </rule>
+
+
+     <rule id="890058" level="3">
+        <if_sid>890000</if_sid>
+         <field name="method_name">drive.files.get</field>
+        <description>Google workspace: Atividade de acesso a arquivos do $(app_name) detectadas</description>
+    </rule> 
+
+        <rule id="890059" level="3">
+        <if_sid>890000</if_sid>
+        <field name="name">login_verification</field>
+        <field name="login_type">google_password</field>
+        <description>Google workspace: Login bem-sucedido detectado para o $(actor.email).</description>
+    </rule>
+    
+    <rule id="890060" level="2">
+        <if_sid>890000</if_sid>
+        <field name="service">meet</field>
+        <field name="name">call_ended</field>
+        <description>Google workspace: Chamada do Google Meet encerrada pelo usuário $(identifier).</description>
+    </rule>   
+
+    <rule id="890061" level="2">
+        <if_sid>890000</if_sid>
+        <field name="name">source_copy</field>
+        <description>Google workspace: O arquivo $(doc_title) foi copoiado para $(actor.email).</description>
+    </rule>
+    
+    <rule id="890062" level="2">
+        <if_sid>890000</if_sid>
+        <field name="name">change_document_access_scope</field>
+        <field name="type">acl_change</field>
+        <description>Google workspace:O documento $(doc_title) teve seu nível de acesso alterado de $(old_value) para $(new_value) por $(actor.email) </description>
+    </rule>
+    
+    <rule id="890063" level="2">
+        <if_sid>890000</if_sid>
+        <field name="name">trash</field>
+        <description>Google workspace:O documento $(doc_title) de propriedade de $(owner) foi movido para a lixeira por $(actor.email). </description>
+    </rule>
+
+    <rule id="890064" level="2">
+        <if_sid>890000</if_sid>
+        <field name="name">resolve_comment</field>
+        <description>Google workspace: O documento $(doc_title) de propriedade de $(owner) teve um comentário resolvido por $(actor.email).</description>
+    </rule>
+    
+    <rule id="890065" level="2">
+        <if_sid>890000</if_sid>
+        <field name="name">label_field_changed</field>
+        <description>Google workspace: O campo $(field) no documento $(doc_title) de propriedade de $(owner) foi alterado para $(new_value) por $(actor.email). </description>
+    </rule>
+    
+    <rule id="890066" level="2">
+        <if_sid>890000</if_sid>
+        <field name="name">create_comment</field>
+        <description>Google workspace: Um comentário foi criado por $(actor.email) no documento $(doc_title) de propriedade de $(owner).</description>
+    </rule>
+    
+    <rule id="890067" level="2">
+        <if_sid>890000</if_sid>
+        <field name="name">move</field>
+        <description>Google workspace: O documento ($doc_title) foi movido de $(source_folder_title) para $(destination_folder_title) por $(actor.email}). O documento é propriedade de $(owner)</description>
+    </rule>  
+    
 </group>
 
+<group name="Alert Center,">
+    
+    <rule id="890090" level="12">
+        <field name="data.@type" type="pcre2">type.googleapis.com/google.apps.alertcenter.*</field>
+        <description>Google Workspace: Evento do Alert Center.</description>
+    </rule>
 
+    <rule id="890091" level="11">
+        <if_sid>890090</if_sid>
+        <field name="data.name" type="pcre2">Compartilhamento externo</field>
+        <description>Google Workspace - Alert Center: Possível compartilhamento externo detectado no Google Cloud Platform.</description>
+    </rule>
+    
+    <rule id="890092" level="12">
+        <if_sid>890090</if_sid>
+        <field name="source" type="pcre2">Data Loss Prevention</field>
+        <field name="data.ruleViolationInfo.trigger">DRIVE_SHARE</field>
+        <field name="data.ruleViolationInfo.ruleInfo.displayName" type="pcre2">CPF.*</field>
+        <description>Google Workspace - Alert Center: O documento "$(data.ruleViolationInfo.resourceInfo.resourceTitle)" do Google Drive contendo CPFs foi compartilhado externamente pelo usuário $(data.ruleViolationInfo.triggeringUserEmail). Potencial vazamento de dados</description>
+    </rule>
+    
+    <rule id="890093" level="12">
+        <if_sid>890090</if_sid>
+        <field name="source" type="pcre2">Gmail phishing</field>
+        <field name="type" type="pcre2">User reported spam spike</field>
+        <description>Google Workspace - Alert Center: Detectado um pico de spam originado de $(data.maliciousEntity.fromHeader) para o domínio $(data.domainId.customerPrimaryDomain)</description>
+    </rule>
+
+    <rule id="890094" level="14">
+        <if_sid>890090</if_sid>
+        <field name="source" type="pcre2">Sensitive Admin Action</field>
+        <description>Google Workspace - Alert Center: Detectado um reset de senha de super administrador. Email do super admin afetado: $(data.superAdminPasswordResetEvent.userEmail)</description>
+    </rule>
+    
+    <rule id="890095" level="12">
+        <if_sid>890090</if_sid>
+        <field name="source" type="pcre2">Gmail phishing</field>
+        <field name="type" type="pcre2">User reported phishing</field>
+        <description>Google Workspace - Alert Center: Email de phishing reportado pelo usuário. Remetente suspeito: $(data.maliciousEntity.fromHeader), para o domínio $(data.domainId.customerPrimaryDomain) </description>
+    </rule>
+    
+    <rule id="890096" level="10">
+        <if_sid>890090</if_sid>
+        <field name="data.name" type="pcre2">SuperAdmin Created</field>
+        <field name="source" type="pcre2">Reporting Rule</field>
+        <description>Google Workspace - Alert Center: SuperAdmin criado. Verifique o Google Workspace Admin Console para mais detalhes.</description>
+    </rule>
+    
+    <rule id="890097" level="12">
+        <if_sid>890090</if_sid>
+        <field name="source" type="pcre2">Gmail phishing</field>
+        <field name="type" type="pcre2">Suspicious message reported</field>
+        <description>Google Workspace - Alert Center: Mensagem suspeita reportada. Remetente suspeito: $(data.maliciousEntity.fromHeader), para o domínio $(data.domainId.customerPrimaryDomain) </description>
+    </rule>
+    
+    <rule id="890098" level="12">
+        <if_sid>890090</if_sid>
+        <field name="source" type="pcre2">Gmail phishing</field>
+        <field name="type" type="pcre2">Phishing reclassification</field>
+        <description>Google Workspace - Alert Center: Email classificado como phishing removido da caixa de entrada do usuário. Remetente suspeito: $(data.maliciousEntity.fromHeader). Ação do sistema: $(data.systemActionType)</description>
+    </rule>
+    
+    <rule id="890099" level="10">
+        <if_sid>890090</if_sid>
+        <field name="data.name" type="pcre2">SuperAdmin Remove</field>
+        <field name="source" type="pcre2">Reporting Rule</field>
+        <description>Google Workspace - Alert Center: SuperAdmin Removido. Verifique o Google Workspace Admin Console para mais detalhes.</description>
+    </rule>
+        <rule id="890100" level="3">
+        <if_sid>890000</if_sid>
+        <field name="name">^APPLICATION_EVENT</field>
+        <field name="type">^device_applications</field>
+        <field name="service">mobile</field>
+        <description>Google workspace: O e-mail $(USER_EMAIL) realiuzou $(APPLICATION_STATE) de um $(DEVICE_TYPE) modelo $(DEVICE_MODEL)</description>
+         
+    </rule>
+    
+    
+</group>
