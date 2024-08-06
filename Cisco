@@ -1,0 +1,150 @@
+<!-- 
+    CUSTOMIZADO        PELA        W3CYBERSEC 
+    - Group for Cisco IOS messages.
+-->
+<group name="syslog,cisco_ios,">
+  <rule id="4700" level="0">
+    <decoded_as>cisco-ios</decoded_as>
+    <description>Grouping of Cisco IOS rules</description>
+  </rule>
+  <rule id="4710" level="10">
+    <if_sid>4700</if_sid>
+    <field name="cisco.severity">0</field>
+    <description>Cisco IOS emergency message - $(cisco.mnemonic)</description>
+    <group>gpg13_4.1,gdpr_IV_35.7.d,</group>
+  </rule>
+  <rule id="4711" level="7">
+    <if_sid>4700</if_sid>
+    <field name="cisco.severity">1</field>
+    <description>Cisco IOS alert message - $(cisco.mnemonic)</description>
+    <group>gpg13_4.1,</group>
+  </rule>
+  <rule id="4712" level="5">
+    <if_sid>4700</if_sid>
+    <field name="cisco.severity">2</field>
+    <description>Cisco IOS critical message - $(cisco.mnemonic)</description>
+    <group>gpg13_4.1,</group>
+  </rule>
+  <rule id="4713" level="4">
+    <if_sid>4700</if_sid>
+    <field name="cisco.severity">3</field>
+    <description>Cisco IOS error message - $(cisco.mnemonic)</description>
+    <group>gpg13_4.3,</group>
+  </rule>
+  <rule id="4714" level="3">
+    <if_sid>4700</if_sid>
+    <field name="cisco.severity">4</field>
+    <description>Cisco IOS warning message - $(cisco.mnemonic)</description>
+    <group>gpg13_4.12,</group>
+  </rule>
+  <rule id="4715" level="0">
+    <if_sid>4700</if_sid>
+    <field name="cisco.severity">5</field>
+    <description>Cisco IOS notification message - $(cisco.mnemonic)</description>
+  </rule>
+  <rule id="4716" level="0">
+    <if_sid>4700</if_sid>
+    <field name="cisco.severity">6</field>
+    <description>Cisco IOS informational message - $(cisco.mnemonic)</description>
+  </rule>
+  <rule id="4717" level="0">
+    <if_sid>4700</if_sid>
+    <field name="cisco.severity">7</field>
+    <description>Cisco IOS debug message - $(cisco.mnemonic)</description>
+  </rule>
+  <rule id="4721" level="3">
+    <if_sid>4715</if_sid>
+    <field name="cisco.facility">^SYS$</field>
+    <field name="cisco.severity">5</field>
+    <field name="cisco.mnemonic">^CONFIG</field>
+    <description>Cisco IOS: Router configuration changed</description>
+    <group>config_changed,pci_dss_10.2.7,gpg13_4.13,gdpr_IV_35.7.d,hipaa_164.312.b,nist_800_53_AU.14,</group>
+  </rule>
+  <rule id="4722" level="3">
+    <if_sid>4715</if_sid>
+    <field name="cisco.facility">^SEC_LOGIN$</field>
+    <field name="cisco.severity">5</field>
+    <field name="cisco.mnemonic">^LOGIN_SUCCESS$</field>
+    <description>Cisco IOS: Successful login to the router</description>
+    <group>authentication_success,pci_dss_10.2.5,gpg13_5.5,gdpr_IV_32.2,hipaa_164.312.b,nist_800_53_AU.14,nist_800_53_AC.7,</group>
+  </rule>
+  <rule id="4724" level="9">
+    <if_sid>4714</if_sid>
+    <field name="cisco.facility">^SEC_LOGIN$</field>
+    <field name="cisco.severity">4</field>
+    <field name="cisco.mnemonic">^LOGIN_FAILED$</field>
+    <description>Cisco IOS: Failed login to the router</description>
+    <group>authentication_failed,pci_dss_10.2.5,pci_dss_10.2.4,gpg13_5.3,gdpr_IV_35.7.d,gdpr_IV_32.2,hipaa_164.312.b,nist_800_53_AU.14,nist_800_53_AC.7,</group>
+  </rule>
+  <!-- 2023-09-24T07:30:06-03:00 PNV-FW01 : %ASA-6-716039: Group <DfltGrpPolicy> User <*****> IP <78.128.112.141> Authentication: rejected, Session Type: WebVPN. -->
+  <rule id="100460" level="3" overwrite="yes">
+    <if_sid>4716</if_sid>
+        <match>ASA-6-716039</match>
+    <description>Autenticação na VPN rejeitada, IP origem: $(srcip)</description>
+</rule>
+<!-- 2023-09-24T07:38:55-03:00 PNV-FW01 : %ASA-6-302016: Teardown UDP connection 142067707 for OUTSIDE-BGP:162.142.125.214/51952 to identity:45.183.246.241/500 duration 0:02:24 bytes 752 -->
+ <rule id="100470" level="3" overwrite="yes">
+    <if_sid>4716</if_sid>
+        <match>ASA-6-302016</match>
+    <description>FW-ASA: Drop de Conexão UDP na VPN, IP origem: $(srcip)</description>
+  </rule>
+  
+  <rule id="100248" level="3" overwrite="yes">
+<if_sid>4714</if_sid>
+    <match>ASA-4-419002</match>
+<description>FW-ASA: TCP SYN duplicado</description>
+  </rule>
+
+  <rule id="100249" level="3" overwrite="yes">
+    <if_sid>4713</if_sid>
+        <match>ASA-3-746016</match>
+    <description>FW-ASA: Pesquisa de DNS falhou. Domínio: $(dns-query)</description>
+  </rule>
+
+<rule id="100250" level="3" overwrite="yes">
+    <if_sid>4714</if_sid>
+        <match>ASA-4-106103</match>
+    <description>FW-ASA: Acesso negado por ACL VPN. Origem: $(src-from) $(ipsrc) para $(ipdst)</description>
+  </rule>
+  
+  <rule id="100256" level="15">
+  <if_sid>4714</if_sid>
+   <match>ASA-4-106023</match>
+   <field name="dstporta">53</field>
+   <field name="src-from">inside</field>
+   <field name="ipsrc" type="pcre2">10.15.18.\d+</field>
+   <description>FW-ASA: Servidor crítico realizou consulta a DNS inválido. Origem: $(src-from) $(ipsrc) para $(ipdst)</description>
+ </rule>
+  
+  <rule id="100255" level="3" overwrite="yes">
+    <if_sid>4714</if_sid>
+        <match>ASA-4-106023</match>
+        <field name="dstporta">53</field>
+        <field name="src-from">inside</field>
+    <description>FW-ASA: Consulta a servidor DNS inválido bloqueada por ACL VPN. Origem: $(src-from) $(ipsrc) para $(ipdst)</description>
+</rule>
+
+  <rule id="100251" level="3" overwrite="yes">
+    <if_sid>4714</if_sid>
+        <match>ASA-4-106023</match>
+    <description>FW-ASA: Acesso negado por ACL VPN. Origem: $(src-from) $(ipsrc) para $(ipdst)</description>
+  </rule>
+
+  <rule id="100252" level="3" overwrite="yes">
+    <if_sid>4714</if_sid>
+        <match>ASA-4-434002</match>
+    <description>FW-ASA: Pacotes negados pelo módulo. Origem: $(src-from) $(ipsrc) para $(ipdst)</description>
+  </rule>
+  <rule id="100253" level="3" overwrite="yes">
+    <if_sid>4714</if_sid>
+        <match>ASA-4-106023</match>
+    <description>FW-ASA: Acesso negado por ACL VPN. Origem: $(src-from) $(ipsrc) para $(ipdst)</description>
+  </rule>
+   <rule id="100254" level="4" overwrite="yes">
+    <if_sid>4713</if_sid>
+        <match>ILPOWER-3-CONTROLLER_PORT_ERR</match>
+    <description>FW-ASA: Falha de energia na interface: $(interface)</description>
+  </rule>
+  </group>
+
+
