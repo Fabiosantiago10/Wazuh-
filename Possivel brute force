@@ -1,0 +1,1663 @@
+<!-- LOCAL_RULES by W3Cybersec para NOMAD-->
+  <!-- Última atualização: 08/maio/24 às 00:42h -->
+  <!-- Jul  1 04:04:48 mail saslauthd[29033]: do_auth : auth failure: [user=user@dominio.com] [service=smtp] [realm --> <!-- =dominio.com] [mech=zimbra] [reason=Unknown] -->
+  <!-- A regra gera um alerta se acontecer 5x em 30s -->
+  
+  
+  <group name="virustotal-int,">
+        <rule id="100999" level="14">
+            <decoded_as>json</decoded_as>
+            <field name="Malicioso.IoC">\.+</field>
+            <description>VirusTotal: Detecção de possível IoC ($(Malicioso.IoC)) no evento $(Malicioso.id).</description>
+        </rule>
+  </group>
+  <group name="syslog, access_control,authentication_failed,">
+      <rule id="100000" level="13" frequency="5" timeframe="30">
+          <if_matched_sid>2501</if_matched_sid>
+          <match>FAILED LOGIN |authentication failure|</match>
+          <match>Authentication failed for|invalid password for|</match>
+          <match>LOGIN FAILURE| auth failure: |authentication error| do_auth</match>
+          <match>authinternal failed|Failed to authorize|</match>
+          <match>Wrong password given for|login failed|Auth: Login incorrect|</match>
+          <match>Failed to authenticate user</match>
+          <group>authentication_failed,pci_dss_10.2.4,pci_dss_10.2.5,gpg13_7.8,gdpr_IV_35.7.d,gdpr_IV_32.2,hipaa_164.312.b,nist_800_53_AU.14,nist_800_53_AC.7,tsc_CC6.1,tsc_CC6.8,tsc_CC7.2,tsc_CC7.3,</group>
+          <description>Brute Force no serviço SMTP</description>
+      </rule>
+  </group>
+  <!-- Regras com rule.id modificados NOMAD -->
+  <group name="windows,windows_security,">
+      <rule id="60154" level="11" overwrite="yes">
+          <if_sid>60144,60145</if_sid>
+          <if_group>default,LXN_EndUsers,WIN_EndUsers</if_group>
+          <field name="win.eventdata.targetSid">^%{S-1-5-32-544}$|^S-1-5-32-544$</field>
+          <options>no_full_log</options>
+          <description>Administrators group changed.</description>
+          <mitre>
+          <id>T1484</id>
+          </mitre>
+          <group>gdpr_IV_32.2,gdpr_IV_35.7.d,gpg13_7.10,group_changed,hipaa_164.312.a.2.I,hipaa_164.312.a.2.II,hipaa_164.312.b,nist_800_53_AC.2,nist_800_53_AC.7,nist_800_53_AU.14,nist_800_53_IA.4,pci_dss_10.2.5,pci_dss_8.1.2,tsc_CC6.8,tsc_CC7.2,tsc_CC7.3,win_group_changed,</group>
+      </rule>
+  </group>
+  <!-- VPN - Authentication error -->
+  <group name="log_vpn,">
+      <rule id="100005" level="0">
+          <decoded_as>logs_vpn</decoded_as>
+          <description>regra pai</description>
+      </rule>
+      <rule id="100010" level="8">
+          <if_sid>100005</if_sid>
+          <regex>l2tp,ppp,error \S\d+.\d+.\d+.\d+>: user \S+ authentication failed</regex>
+          <description>Falha ao conectar na VPN pelo usuário $(dstuser) atraves do IP $(srcip)</description>
+      </rule>
+  </group>
+  <!-- May 21 02:24:51 192.168.1.248 ipsec,error 94.102.61.29 phase1 negotiation failed -->
+  <!-- A regra abaixo alerta se acontecer 5x em 1 minuto -->
+  <group name="rules_ipsec_error_phase1_failed,">
+      <rule id="100015" level="13" frequency="5" timeframe="60">
+          <decoded_as>ipsec_error_phase1_failed_pai</decoded_as>
+          <if_matched_sid>1002</if_matched_sid>
+          <regex>(\S+) phase1 negotiation failed</regex>
+          <description>O IP $(srcip) falhou ao se conectar na VPN com IP local $(hostname)</description>
+      </rule>
+  </group>
+  <!-- May 21 02:24:51 192.168.1.248 ipsec,error 94.102.61.29 failed to get valid proposal -->
+  <!-- A regra abaixo alerta se acontecer 5x em 1 minuto -->
+  <group name="rules_ipsec_failed_get_valid_proposal,">
+      <rule id="100020" level="13" frequency="5" timeframe="60">
+          <decoded_as>ipsec_error_failed_get_valid_pai</decoded_as>
+          <if_matched_sid>1002</if_matched_sid>
+          <regex>(\S+) failed to get valid proposal</regex>
+          <description>O IP $(srcip) falhou ao se conectar na VPN com IP local $(hostname)</description>
+      </rule>
+  </group>
+  <!-- Login no Linux: Possível bruteforce -->
+  <!-- A regra abaixo alerta se acontecer 5x em 30s -->
+  <group name="syslog, sshd,">
+      <rule id="100025" level="14" frequency="5" timeframe="30">
+          <if_matched_sid>5760</if_matched_sid>
+          <description>SSH: Possível Brute Force.</description>
+          <mitre>
+              <id>T1110.001</id>
+              <id>T1021.004</id>
+          </mitre>
+          <group>authentication_failed,gdpr_IV_35.7.d,gdpr_IV_32.2,gpg13_7.1,hipaa_164.312.b,nist_800_53_AU.14,nist_800_53_AC.7,pci_dss_10.2.4,pci_dss_10.2.5,tsc_CC6.1,tsc_CC6.8,tsc_CC7.2,tsc_CC7.3,</group>
+      </rule>
+  </group>
+  <!-- "Web server 400 error code" id: 31101 -->
+  <!-- A regra gera um alerta se acontecer 3x em 1s -->
+  <group name="web,accesslog,">
+      <rule id="100030" level="14" frequency="3" timeframe="1">
+          <if_matched_sid>31101</if_matched_sid>
+          <same_source_ip />
+          <description>Múltiplos códigos de erros [400] no Web server </description>
+          <description>/ Possível enumeração de diretórios.</description>
+          <mitre>
+              <id>T1595.002</id>
+          </mitre>
+          <group>web_scan,recon,pci_dss_6.5,pci_dss_11.4,gdpr_IV_35.7.d,nist_800_53_SA.11,nist_800_53_SI.4,tsc_CC6.6,tsc_CC7.1,tsc_CC8.1,tsc_CC6.1,tsc_CC6.8,tsc_CC7.2,tsc_CC7.3,</group>
+      </rule>
+  </group>
+  <!-- Usuario normal utilizou o comando SUDO -->
+  <!-- Jun 29 23:56:00 wazuh sudo:  damiel : TTY=pts/0 ; PWD=/home/damiel ; USER=root ; COMMAND=/usr/bin/su -->
+  <group name="syslog, sudo,">
+      <rule id="100035" level="9">
+          <if_sid>5403</if_sid>
+          <description>O usuario $(srcuser) fez uso do SUDO com o comando $(command).</description>
+      </rule>
+  <rule id="100040" level="14">
+    <if_sid>5402</if_sid>
+    <description>O usuario $(srcuser) fez uso do SUDO com o comando $(command).
+    </description>
+  </rule>
+  </group>
+  <!-- Usuario normal utilizou o comando SUDO -->
+  <!-- Jun 30 03:25:48 bitdefender sudo: root : TTY=unknown ; PWD=/opt/bitdefender/gzupdatesystem/UpdateManager ; USER=bdadmin ; COMMAND=/usr/bin/nodejs gzcli.js set-security-updates -s true -->
+  <group name="syslog, sudo,">
+      <rule id="100045" level="9">
+          <if_sid>5407</if_sid>
+          <description>O usuario $(dstuser) fez uso do SUDO com o comando $(command).</description>
+      </rule>
+  </group>
+  <!-- SSH: Login com sucesso -->
+  <group name="syslog, sshd,">
+      <rule id="100050" level="9">
+          <if_sid>5715</if_sid>
+          <description>O usuario $(dstuser) fez login por SSH com IP $(srcip).</description>
+      </rule>
+  </group>
+  <!-- Login windows: Administrador fez login em horário suspeito -->
+  <group name="windows,windows_security,">
+      <rule id="100055" level="15">
+          <if_sid>60106</if_sid>
+          <field name="win.eventdata.workstationName">\.+</field>
+          <time>8 pm - 6 am</time>
+          <field name="win.eventdata.logonType">^2$</field>
+          <field name="win.eventdata.targetUserName">Administrator|Administrador</field>
+          <options>no_full_log</options>
+          <description>Usuário Administrador fez login em horário suspeito na máquina $(hostname).</description>
+      </rule>
+  </group>
+  <!-- Download de arquivo malicioso -->
+  <group name="local,malware,">
+      <rule id="100060" level="15">
+          <if_sid>554</if_sid>
+          <field name="file" type="pcre2">hl\s?(\(\d+\))?.exe$</field>
+          <description>Download de arquivo malicioso - $(file)</description>
+      </rule>
+  </group>
+  <!-- Windows: Possível movimentação lateral -->
+  <group name="windows,sysmon,privilege-escalation">
+      <rule id="100065" level="15">
+          <if_sid>61615</if_sid>
+          <field name="win.eventdata.targetObject" type="pcre2">HKLM\\\\System\\\\CurrentControlSet\\\\Services\\\\PSEXESVC</field>
+          <field name="win.eventdata.eventType" type="pcre2">^SetValue$</field>
+          <field name="win.eventdata.user" type="pcre2">NT AUTHORITY\\\\SYSTEM</field>
+          <options>no_full_log</options>
+          <description>PsExec foi executado pelo usuário: $(win.eventdata.user) em: $(win.system.computer).Possível escalação de privilégio!</description>
+          <mitre>
+              <id>T1543.003</id>
+          </mitre>
+      </rule>
+  </group>
+  <!-- A regra gera um alerta se mtos logs do windows forem limpos em pouco tempo -->
+  <group name="windows,windows_logs,">
+      <rule id="100070" level="14" frequency="5" timeframe="20" overwrite="yes">
+          <if_matched_sid>63104</if_matched_sid>
+        <field name="win.system.eventID">^104$</field>
+        <description>Atividade suspeita: Muitos logs do windows foram limpos em pouco tempo! Possível atividade de malware!</description>
+        <options>no_full_log</options>
+        <mitre>
+            <id>T1070</id>
+        </mitre>
+        <group>log_clearing,gpg13_10.1,gdpr_II_5.1.f,</group>
+    </rule>
+  </group>
+  <!-- Arquivo suspeito criado na pasta Temp do usuário -->
+  <group name="sysmon,sysmon_eid11_detections,windows,">  
+      <rule id="92213" level="14" overwrite="yes">
+          <if_group>sysmon_event_11</if_group>
+          <field name="win.eventdata.targetFilename" type="pcre2">(?i)[c-z]:\\\\Users\\\\.+\\\\AppData\\\\Local\\\\Temp\\\\.+\.(exe|com|dll|vbs|js|bat|cmd|pif|wsh|ps1|msi|vbe)</field>
+          <options>no_full_log</options>
+          <description>Arquivo suspeito criado na pasta temporária do usuário. Verifique em C:\Users\nome_usuario\AppData\Local\Temp</description>
+          <mitre>
+              <id>T1105</id>
+          </mitre>
+      </rule>
+  </group>
+  <!-- Login no windows: Possível bruteforce -->
+  <!-- Logon failure - Unknown user or bad password -->
+  <!-- A regra gera um alerta se acontecer 5x em 30s. -->
+  <group name="windows,windows_security,">
+      <rule id="60122" level="14" frequency="5" timeframe="30" overwrite="yes">
+          <if_matched_sid>60105</if_matched_sid>
+          <field name="win.system.eventID">^529$|^4625$</field>
+          <options>no_full_log</options>
+          <description>Login Windows: Possível Brute Force.</description>
+          <mitre>
+              <id>T1078</id>
+              <id>T1531</id>
+          </mitre>
+          <group>authentication_failed,gdpr_IV_32.2,gdpr_IV_35.7.d,gpg13_7.1,hipaa_164.312.b,nist_800_53_AC.7,nist_800_53_AU.14,pci_dss_10.2.4,pci_dss_10.2.5,tsc_CC6.1,tsc_CC6.8,tsc_CC7.2,tsc_CC7.3,</group>
+      </rule>
+  </group>
+  <!-- Kernel: Possível rootkit -->
+  <group name="ossec,">
+      <rule id="521" level="15" overwrite="yes">
+          <if_sid>510</if_sid>
+          <match>Possible kernel level rootkit</match>
+          <description>Kernel: Possível rootkit</description>
+          <mitre>
+              <id>T1014</id>
+          </mitre>
+          <group>rootcheck,</group>
+      </rule>
+      <rule id="116686" level="9">
+          <if_sid>521</if_sid>
+          <match>Possible kernel level rootkit</match>
+          <field name="title" type="pcre2">.*'\/tmp\/.mount_.*</field>
+          <field name="title" type="pcre2">.*'\/tmp\/system.log.*</field>
+          <field name="title" type="pcre2">.*'\/tmp\/runc-process.*</field>
+          <description>Kernel: Possível rootkit</description>
+          <mitre>
+            <id>T1014</id>
+          </mitre>
+          <group>rootcheck,</group>
+      </rule>
+  </group>
+  <!-- Ataques golden ticket, Keberoasting e DCSync -->
+  <!-- INICIO -->
+  <group name="security_event, windows,">
+    <!-- Esta regra detecta possíveis ataques DCSync usando eventos de segurança do Windows no controlador de domínio -->
+    <rule id="100075" level="12">
+      <if_sid>60103</if_sid>
+      <field name="win.system.eventID">^4662$</field>
+      <field name="win.eventdata.properties" type="pcre2">{1131f6aa-9c07-11d1-f79f-00c04fc2dcd2}|{19195a5b-6da0-11d0-afd3-00c04fd930c9}</field>
+      <options>no_full_log</options>
+      <description>Directory Service Access: Possível ataque DCSync</description>
+    </rule>
+  <!-- Esta regra ignora o Directory Service Access originado de contas de máquinas contendo $ -->
+  <rule id="100080" level="0">
+      <if_sid>60103</if_sid>
+      <field name="win.system.eventID">^4662$</field>
+      <field name="win.eventdata.properties" type="pcre2">{1131f6aa-9c07-11d1-f79f-00c04fc2dcd2}|{19195a5b-6da0-11d0-afd3-00c04fd930c9}</field>
+      <field name="win.eventdata.SubjectUserName" type="pcre2">\$$</field>
+      <options>no_full_log</options>
+      <description>Ignore todos Directory Service Access originado de uma conta contendo $ no login</description>
+    </rule>
+    <!-- Esta regra detecta possíveis ataques Keberoasting usando eventos de segurança do Windows no controlador de domínio -->
+    <rule id="100085" level="12">
+      <if_sid>60103</if_sid>
+      <field name="win.system.eventID">^4769$</field>
+      <field name="win.eventdata.TicketOptions" type="pcre2">0x40810000</field>
+      <field name="win.eventdata.TicketEncryptionType" type="pcre2">0x17</field>
+      <options>no_full_log</options>
+      <description>Possível ataque Keberoasting</description>
+    </rule>
+    <!-- Esta regra detecta possíveis ataques Golden Ticket usando eventos de segurança do Windows no controlador de domínio -->
+    <rule id="100090" level="12">
+      <if_sid>60103</if_sid>
+      <field name="win.system.eventID">^4624$</field>
+      <field name="win.eventdata.LogonGuid" type="pcre2">{00000000-0000-0000-0000-000000000000}</field>
+      <field name="win.eventdata.logonType" type="pcre2">3</field>
+      <field name="data.win.eventdata.logonProcessName" type="pcre2">^(?!NtLmSsp$).*</field>
+      <options>no_full_log</options>
+      <description>Possível ataque Golden</description>
+    </rule>
+  </group>
+  <!-- FIM -->
+  <!-- Despejo de credenciais e movimentação lateral -->
+  <!-- INICIO -->
+  <group name="security_event, windows,">
+    <!-- Esta regra detecta quando o PsExec é iniciado remotamente para realizar movimentos laterais dentro do domínio. -->
+    <rule id="100095" level="14">
+      <if_sid>61600</if_sid>
+      <field name="win.system.eventID" type="pcre2">17|18</field>
+      <field name="win.eventdata.PipeName" type="pcre2">\\PSEXESVC</field>
+      <options>no_full_log</options>
+      <description>Atividade suspeita: PsExec foi iniciado remotamente para realizar movimentação lateral dentro do domínio.</description>
+    </rule>
+    <!-- Esta regra detecta a extração do arquivo NTDS.dit -->
+    <rule id="100100" level="14">
+      <if_group>sysmon_event1</if_group>
+      <field name="win.eventdata.commandLine" type="pcre2">NTDSUTIL</field>
+      <description>Possível extração do arquivo NTDS.dit usando ntdsutil.exe</description>
+    </rule>
+    <!-- Esta regra detecta ataques Pass-the-ash usando o evento de segurança 4624 do Windows -->
+    <rule id="100105" level="14">
+      <if_sid>60103</if_sid>
+      <field name="win.system.eventID">^4624$</field>
+      <field name="win.eventdata.LogonProcessName" type="pcre2">seclogo</field>
+      <field name="win.eventdata.LogonType" type="pcre2">9</field>
+      <field name="win.eventdata.AuthenticationPackageName" type="pcre2">Negotiate</field>
+      <field name="win.eventdata.LogonGuid" type="pcre2">{00000000-0000-0000-0000-000000000000}</field>
+      <options>no_full_log</options>
+      <description>Possível ataque Pass the hash</description>
+    </rule>
+    <!-- Esta regra detecta o despejo de credenciais quando o comando sekurlsa::logonpasswords é executado no mimikatz -->
+    <rule id="100110" level="15">
+      <if_sid>61612</if_sid>
+      <field name="win.eventdata.TargetImage" type="pcre2">(?i)\\\\system32\\\\lsass.exe</field>
+      <field name="win.eventdata.GrantedAccess" type="pcre2">(?i)0x1010</field>
+      <description>Possível uso do Mimikatz para fazer dump das credenciais do Windows.</description>
+    </rule>
+  </group>
+  <!-- MALWARE: BlackCat ransomware -->
+  <group name="blackcat,">
+  <!-- Detecta quando o BlackCat exclui 'cópias de sombra' -->
+    <rule id="116000" level="14">
+      <if_sid>61603</if_sid>
+      <field name="win.eventdata.CommandLine" type="pcre2">(?i)wmic.exe\s\sShadowcopy\sDelete</field>
+      <description>As 'cópias de sombra' foram excluídas. Possível atividade do Ransomware BlackCat!</description>
+      <mitre>
+        <id>T1490</id>
+      </mitre>
+    </rule>
+  <!-- Detecta quando o BlackCat desativa a recuperação automática -->
+    <rule id="116005" level="14">
+      <if_sid>61603</if_sid>
+      <field name="win.eventdata.CommandLine" type="pcre2">(?i)bcdedit\s\s\/set {default} recoveryenabled No</field>
+      <description>Recuperação do sistema desativada. Possível atividade do Ransomware BlackCat!</description>
+      <mitre>
+        <id>T1490</id>
+      </mitre>
+    </rule>
+  <!-- Detecta quando o BlackCat limpa os logs de eventos -->
+    <rule id="116010" level="14">
+      <if_sid>61603</if_sid>
+      <field name="win.eventdata.CommandLine" type="pcre2">(?i)\C:.*\('wevtutil.exe el'\) DO wevtutil.exe cl.*</field>
+      <description>Logs de eventos apagados! Possível atividade do Ransomware BlackCat!</description>
+      <mitre>
+        <id>T1070.001</id>
+      </mitre>
+    </rule>
+  <!-- Detecta quando o BlackCat cria notas de resgate -->
+    <rule id="116015" level="14" timeframe="100" frequency="2">
+      <if_sid>61613</if_sid>
+      <field name="win.eventdata.targetFilename" type="pcre2">(?i)\C:.*.RECOVER-.*-FILES.txt</field>
+      <description>O arquivo $(win.eventdata.targetFilename) foi criado em vários diretórios. Possível atividade do Ransomware BlackCat!</description>
+      <mitre>
+        <id>T1486</id>
+      </mitre>
+    </rule>
+  <!-- Detecta quando o BlackCat modifica o registro para alterar as configurações de MaxMpxCt -->
+    <rule id="116020" level="14">
+      <if_sid>61615</if_sid>
+      <field name="win.eventdata.eventType" type="pcre2" >^SetValue$</field>
+      <field name="win.eventdata.targetObject" type="pcre2" >HKLM\\\\\System\\\\CurrentControlSet\\\\Services\\\\LanmanServer\\\\Parameters\\\\MaxMpxCt</field>
+          <description>Foram feitas alterações nas config. de MaxMpxCt no registro em: $(win.system.computer). Possível atividade do Ransomware BlackCat!</description>   
+      <mitre>
+        <id>T1543</id>
+      </mitre>
+    </rule>
+  </group>
+  <!-- Sliver C2 framework  -->
+  <group name="sliver,">
+    <!-- a regra é acionada quando um processo Sliver gera um shell reverso -->
+    <rule id="116025" level="14">
+      <if_sid>61603</if_sid>
+      <field name="win.eventdata.parentImage" type="pcre2">.exe</field>
+      <field name="win.eventdata.image" type="pcre2">powershell.exe</field>
+      <field name="win.eventdata.commandLine" type="pcre2"> -NoExit -Command \[Console\]::OutputEncoding=\[Text.UTF8Encoding]::UTF8</field>
+      <description>Framework Sliver C2 > shell executada: $(win.eventdata.commandLine).</description>
+      <mitre>
+        <id>T1086</id>
+      </mitre>
+    </rule>
+    <!-- a regra é acionada quando um processo cria um thread remoto -->
+    <rule id="116030" level="14">
+      <if_sid>61610</if_sid>
+      <field name="win.eventdata.sourceImage" type="pcre2">.exe</field>
+      <field name="win.eventdata.targetImage" type="pcre2">C:\\\\Program\ Files\\\\D*[A-Za-z0-9_.]*\\\\[A-Za-z0-9_.]*\\\\[A-Za-z0-9_.]*\\\\[A-Za-z0-9_.]*.exe$</field>
+      <description>Atividade suspeita de injeção de processo: $(win.eventdata.sourceImage) em $(win.eventdata.targetImage).</description>
+      <mitre>
+        <id>T1055</id>
+      </mitre>
+    </rule>
+  </group>
+  <!-- Ataque de acesso as credenciais do Windows -->
+  <group name="Windows,attack,">
+  <!-- A regra é acionada quando é feito dump do LSASS usando os utilitários rundll32.exe e comsvcs.dll -->
+    <rule id="116035" level="14">
+      <if_sid>61609</if_sid>
+      <field name="win.eventdata.image" type="pcre2">(?i)\\\\rundll32.exe</field>
+      <field name="win.eventdata.imageLoaded" type="pcre2">(?i)[c-z]:\\\\Windows\\\\System32\\\\comsvcs\.dll</field>
+      <description>Possível dump de memória LSASS: $(win.eventdata.imageLoaded) carregado por: $(win.eventData.image) em: $(win.system.computer)</description>
+      <mitre>
+        <id>T1003.001</id>
+      </mitre>
+    </rule>
+  <!-- A regra é acionada quando é feito dump do LSASS usando procdump ou dumpert -->
+    <rule id="116040" level="12">
+      <if_sid>61613</if_sid>
+      <field name="win.eventData.targetFilename" type="pcre2">(?i)\\\\[^\\]*\.dmp$</field>
+      <field name="win.eventdata.image" negate="yes" type="pcre2">(?i).*lsass.*|C:.*WINDOWS.*SysWOW64.</field>
+      <field name="win.eventdata.image" negate="yes" type="pcre2">(?i).*lsass.*|C:.*WINDOWS.*WerFault\.exe$</field>
+      <field name="win.eventdata.image" negate="yes" type="pcre2">.*stAgentSvc.exe</field>
+      <description>Possível dump de memória LSASS: $(win.eventdata.image) criou um novo arquivo em: $(win.system.computer)</description>
+      <mitre>
+        <id>T1003.001</id>
+      </mitre>
+    </rule>
+  <!-- Detectando exploração do Windows Credential Manager -->
+    <rule id="116045" level="14">
+      <if_sid>61603</if_sid>
+      <field name="win.eventData.Image" type="pcre2">(?i)\\\\rundll32.exe</field>
+      <field name="win.eventData.commandLine" type="pcre2">keymgr.dll,KRShowKeyMgr</field>
+      <description>Possível exploração do 'Windows Credential Manager' via: $(win.eventData.Image) em: $(win.system.computer)</description>
+      <mitre>
+        <id>T1003</id>
+      </mitre>
+    </rule>
+  <!-- A regra é acionada quando as credenciais do Windows estão sendo listadas usando o VaultCmd.exe -->
+    <rule id="116050" level="14">
+      <if_sid>92052</if_sid>
+      <field name="win.eventData.image" type="pcre2">(?i)\\\\vaultcmd.exe</field>
+      <field name="win.eventData.commandLine" type="pcre2">list</field>
+      <description>Possível tentativa de listar credenciais via: $(win.eventData.Image) em: $(win.system.computer)</description>
+      <mitre>
+        <id>T1003</id>
+      </mitre>
+    </rule>
+  </group>
+  <!-- MALWARE: AsyncRAT -->
+  <group name="asyncrat,">
+  <!-- a regra é acionada quando o AsyncRAT é executado no Windows -->
+  <rule id="116055" level="14">
+      <if_sid>61603</if_sid>
+      <field name="win.eventdata.Image" type="pcre2">\.exe</field>
+      <field name="win.eventdata.OriginalFileName" type="pcre2">Stub\.exe</field>
+      <field name="win.eventdata.originalFileName" negate="yes">MpSigStub.exe</field>
+      <description>AsyncRAT > Possível execução do malware! Verifique o arquivo executável que foi adicionado na pasta temporária do usuário! </description>
+      <mitre>
+          <id>T1204</id>
+      </mitre>
+  </rule>
+  <!-- a regra é acionada quando o AsyncRAT injeta o DLL mscoree.dll em C:\Windows\Microsoft.NET\Framework\v4.0.30319\ -->
+  <rule id="116060" level="14">
+      <if_sid>61609</if_sid>
+      <field name="win.eventdata.Image" type="pcre2">.*\.exe</field>
+      <field name="win.eventdata.ImageLoaded" type="pcre2">(?i)[c-z]:\\\\Windows\\\\SysWOW64\\\\mscoree\.dll</field>
+      <description>MALWARE: AsyncRAT > O processo $(win.eventdata.ImageLoaded) foi injetado em: $(win.system.computer).</description>
+      <mitre>
+          <id>T1055.001</id>
+      </mitre>
+  </rule>
+  <!-- a regra é acionada quando o AsyncRAT injeta o DLL mscoreei.dll em C:\Windows\Microsoft.NET\Framework\v4.0.30319\ -->
+  <rule id="116065" level="14">
+      <if_sid>61609</if_sid>
+      <field name="win.eventdata.Image" type="pcre2">.*\.exe</field>
+      <field name="win.eventdata.ImageLoaded" type="pcre2">(?i)[c-z]:\\\\Windows\\\\Microsoft\.NET\\\\Framework\\\\v4\.0\.30319\\\\mscoreei\.dll</field>
+      <description>MALWARE: AsyncRAT > O processo $(win.eventdata.ImageLoaded) foi injetado em: $(win.system.computer).</description>
+      <mitre>
+          <id>T1055.001</id>
+      </mitre>
+  </rule>
+  <!-- a regra é acionada quando o AsyncRAT injeta o DLL clrjit.dll em C:\Windows\Microsoft.NET\Framework\v4.0.30319\ -->
+  <rule id="116070" level="14">
+      <if_sid>61609</if_sid>
+      <field name="win.eventdata.Image" type="pcre2">.*\.exe</field>
+      <field name="win.eventdata.ImageLoaded" type="pcre2">(?i)[c-z]:\\\\Windows\\\\Microsoft\.NET\\\\Framework\\\\v4\.0\.30319\\\\clrjit\.dll</field>
+      <description>MALWARE: AsyncRAT > O processo $(win.eventdata.ImageLoaded) foi injetado em: $(win.system.computer).</description>
+      <mitre>
+          <id>T1055.001</id>
+      </mitre>
+  </rule>
+  <!-- a regra é acionada quando o AsyncRAT cria chaves no registro -->
+  <rule id="116075" level="14">
+      <if_sid>61614</if_sid>
+      <field name="win.eventdata.EventType" type="pcre2">^CreateKey$</field>
+      <field name="win.eventdata.Image" type="pcre2">(?i)[c-z]:\\\\Windows\\\\System32\\\\svchost\.exe</field>
+      <field name="win.eventdata.TargetObject" type="pcre2">HKLM\\\\System\\\\CurrentControlSet\\\\Services\\\\[A-Za-z0-9]+</field>
+      <description>MALWARE: AsyncRAT > Chave de registro suspeita detectada em: $(win.system.computer).</description>
+      <mitre>
+          <id>T1543</id>
+      </mitre>
+  </rule>
+  </group>
+  <!-- MALWARE: Blackbit Ransomware -->
+  <group name="blackbit_ransomware,">
+  <!-- regra quando o Blackbit cria e altera as configurações do registro-1 -->
+    <rule id="116080" level="14">
+      <if_sid>61615</if_sid>
+      <field name="win.eventdata.eventType" type="pcre2" >^SetValue$</field>
+      <field name="win.eventdata.targetObject" type="pcre2" >HKCR\\\\BlackBit\\\\shell\\\\open\\\\command\\\\\(Default\)</field>
+      <description>MALWARE: Blackbit Ransomware > Foram feitas alterações nas config. do registro no endpoint: $(win.system.computer)</description>   
+      <mitre>
+        <id>T1543</id>
+      </mitre>
+    </rule>
+  <!-- regra quando o Blackbit cria e altera as configurações do registro-2 -->
+    <rule id="116085" level="14">
+      <if_sid>61614</if_sid>
+      <field name="win.eventdata.eventType" type="pcre2" >^CreateKey$</field>
+      <field name="win.eventdata.targetObject" type="pcre2" >HKCR\\\\BlackBit\\\\shell\\\\open</field>
+      <description>MALWARE: Blackbit Ransomware > Foram feitas alterações nas config. do registro no endpoint: $(win.system.computer)</description>   
+      <mitre>
+        <id>T1543</id>
+      </mitre>
+    </rule>
+  <!-- regra quando o Blackbit adiciona arquivos .bat e .exe na pasta de inicialização-1 -->
+    <rule id="116090" level="14">
+      <if_sid>61613</if_sid>
+      <field name="win.eventdata.image" type="pcre2">\.exe</field>
+      <field name="win.eventdata.targetFilename" type="pcre2">(?i)[c-z]:\\\\Users\\\\.+\\\\AppData\\\\Roaming\\\\Microsoft\\\\.+\\\\Startup\\\\.*bat</field>
+      <description>MALWARE: Blackbit Ransomware > O arquivo $(win.eventdata.targetFilename) foi adicionado à pasta Iniciar por $(win.eventdata.image)</description>
+      <mitre>
+        <id>T1059</id>
+      </mitre>
+    </rule>
+  <!-- regra quando o Blackbit adiciona arquivos .bat e .exe na pasta de inicialização-2 -->
+    <rule id="116095" level="14">
+      <if_sid>61613</if_sid>
+      <field name="win.eventdata.image" type="pcre2">\.exe</field>
+      <field name="win.eventdata.targetFilename" type="pcre2">(?i)[C-Z]:\\\\ProgramData\\\\.*\\\\Startup\\\\winlogon.exe</field>
+      <description>MALWARE: Blackbit Ransomware > O arquivo $(win.eventdata.targetFilename) foi adicionado à pasta Iniciar para persistência por $(win.eventdata.image)</description>
+      <mitre>
+        <id>T1059</id>
+      </mitre>
+    </rule>
+  <!-- regra quando o Blackbit adiciona winlogon.exe à pasta C:\Windows -->
+    <rule id="116100" level="14">
+      <if_sid>61613</if_sid>
+      <field name="win.eventdata.image" type="pcre2">\.exe</field>
+      <field name="win.eventdata.targetFilename" type="pcre2">(?i)[c-z]:\\\\Windows\\\\winlogon.exe</field>
+      <description>MALWARE: Blackbit Ransomware > O arquivo $(win.eventdata.targetFilename) foi adicionado à pasta Windows por $(win.eventdata.image)</description>
+      <mitre>
+        <id>T1059</id>
+      </mitre>
+    </rule>
+  <!-- regra quando o Blackbit explora o arquivo svchost.exe no endpoint -->
+  <!-- windows para armazenar a entrada no agendador de tarefas criado em --><!-- C:\Windows\System32\Tasks\BlackBit -->
+    <rule id="116105" level="14">
+      <if_sid>61613</if_sid>
+      <field name="win.eventdata.image" type="pcre2">C:\\\\Windows\\\\system32\\\\svchost.exe</field>
+      <field name="win.eventdata.targetFilename" type="pcre2">(?i)[C-Z]:\\\\Windows\\\\System32\\\\Tasks\\\\BlackBit</field>
+      <description>MALWARE: Blackbit Ransomware > O arquivo $(win.eventdata.targetFilename) foi criado por $(win.eventdata.image)</description>
+      <mitre>
+        <id>T1059</id>
+      </mitre>
+    </rule>
+  <!-- regra quando o Blackbit altera as configurações de registro do agendador de tarefas-1 -->
+    <rule id="116110" level="14">
+      <if_sid>61615</if_sid>
+      <field name="win.eventdata.eventType" type="pcre2">^SetValue$</field>
+      <field name="win.eventdata.targetObject" type="pcre2">HKLM\\\\SOFTWARE\\\\Microsoft\\\\Windows NT\\\\CurrentVersion\\\\Schedule\\\\TaskCache\\\\Tree\\\\BlackBit\\\\.*</field>
+      <description>MALWARE: Blackbit Ransomware > Foram feitas alterações nas config. do registro em: $(win.system.computer)</description>   
+      <mitre>
+        <id>T1543</id>
+      </mitre>
+    </rule>
+  <!-- regra quando o Blackbit altera as configurações de registro do agendador de tarefas-2 -->
+    <rule id="116115" level="14">
+      <if_sid>61614</if_sid>
+      <field name="win.eventdata.eventType" type="pcre2">^CreateKey$</field>
+      <field name="win.eventdata.targetObject" type="pcre2">HKLM\\\\SOFTWARE\\\\Microsoft\\\\Windows NT\\\\CurrentVersion\\\\Schedule\\\\TaskCache\\\\Tree\\\\BlackBit</field>
+      <description>MALWARE: Blackbit Ransomware > Foram feitas alterações nas config. do registro em: $(win.system.computer)</description>   
+      <mitre>
+        <id>T1543</id>
+      </mitre>
+    </rule>
+  <!-- regra quando o Blackbit cria uma entrada no agendador de tarefas para manter a persistência -->
+    <rule id="116120" level="14">
+      <if_sid>92032</if_sid>
+      <field name="win.eventdata.CommandLine" type="pcre2">(?i)schtasks\s\s\/CREATE\s\/SC\sONLOGON\s\/TN\sBlackBit\s\/TR</field>
+      <description>MALWARE: Blackbit Ransomware > Foi criada uma entrada no 'Agendador de tarefas' para persistência</description>
+      <mitre>
+        <id>T1087</id>
+        <id>T1059.003</id>
+      </mitre>
+    </rule>
+  <!-- regra quando o Blackbit desativa o firewall do Windows Defender -->
+    <rule id="116125" level="14">
+      <if_sid>61603</if_sid>
+      <field name="win.eventdata.CommandLine" type="pcre2">(?i)\/C\snetsh\sadvfirewall\sset\scurrentprofile\sstate\soff</field>
+      <description>Windows Defender Firewall desabilitado! Possível atividade de malware!</description>
+      <mitre>
+        <id>T1087</id>
+        <id>T1059.003</id>
+      </mitre>
+    </rule>
+  <!-- regra quando o Blackbit exclui todas as "cópias de sombra" dos arquivos e pastas no endpoint do Windows -->
+    <rule id="116130" level="14">
+      <if_sid>61603</if_sid>
+      <field name="win.eventdata.CommandLine" type="pcre2">(?i)\/C\swmic\sshadowcopy\sdelete</field>
+      <description>'Cópias de sombra' foram apagadas! Possível atividade do Ransomware Blackbit!</description>
+      <mitre>
+        <id>T1087</id>
+        <id>T1059.003</id>
+      </mitre>
+    </rule>
+  <!-- regra quando o Blackbit deixa uma nota de resgate com o nome do arquivo "Restore-My-Files.txt" em várias pastas -->
+    <rule id="116135" level="14" timeframe="100" frequency="2">
+      <if_sid>61613</if_sid>
+      <field name="win.eventdata.image" type="pcre2">\.exe</field>
+      <field name="win.eventdata.targetFilename" type="pcre2">(?i)[C-Z]:.*.\\Restore-My-Files.txt</field>
+      <description>O arquivo $(win.eventdata.targetFilename) foi criado em vários diretórios. Possível atividade do Ransomware Blackbit!</description>
+      <mitre>
+        <id>T1059</id>
+      </mitre>
+    </rule>
+  <!-- regra quando o Blackbit altera as config de registro do Microsoft Defender -->
+    <rule id="116140" level="14">
+      <if_sid>61615</if_sid>
+      <field name="win.eventdata.eventType" type="pcre2">^SetValue$</field>
+      <field name="win.eventdata.image" type="pcre2">\.exe</field>
+      <field name="win.eventdata.targetObject" type="pcre2" >HKLM\\\\SOFTWARE\\\\Policies\\\\Microsoft\\\\Windows Defender\\\\.*</field>
+      <description>Windows Defender desativado por alterações nas config. do registro em $(win.system.computer). Possível atividade do Ransomware Blackbit!</description>   
+      <mitre>
+        <id>T1543</id>
+      </mitre>
+    </rule>
+  </group>
+  <!-- MALWARE: CrossLock Ransomware -->
+  <group name="crosslock,">
+  <!-- regra acionada quando detecta que o ransomware CrossLock cria notas de resgate com o nome de arquivo —CrossLock_readme_To_Decrypt—.txt em várias pastas -->
+    <rule id="116145" level="14" timeframe="50" frequency="2">
+      <if_sid>61613</if_sid>
+      <field name="win.eventdata.targetFilename" type="pcre2">(?i)[C-Z]:.*.CrossLock.*---.txt</field>
+      <description>MALWARE: CrossLock Ransomware > O arquivo $(win.eventdata.targetFilename) foi criado em vários diretórios.</description>
+      <mitre>
+        <id>T1486</id>
+      </mitre>
+    </rule>
+  <!-- regra acionada quando detecta que o CrossLock exclui o backup de estado do sistema mais antigo -->
+    <rule id="116150" level="14">
+      <if_sid>92032</if_sid>
+      <field name="win.eventdata.CommandLine" type="pcre2">(?i)wbadmin\s\sDELETE\sSYSTEMSTATEBACKUP\s-deleteOldest</field>
+      <description>MALWARE: CrossLock Ransomware > Comando suspeito executado para excluir o bkp de estado mais antigo do sistema.</description>
+      <mitre>
+        <id>T1490</id>
+      </mitre>
+    </rule>
+  <!-- regra acionada quando detecta que o CrossLock exclui o backup de estado do sistema -->
+    <rule id="116155" level="14">
+      <if_sid>92032</if_sid>
+      <field name="win.eventdata.CommandLine" type="pcre2">(?i)wbadmin\s\sDELETE\sSYSTEMSTATEBACKUP</field>
+      <description>MALWARE: CrossLock Ransomware > Comando suspeito executado para excluir o backup de estado do sistema.</description>
+      <mitre>
+        <id>T1490</id>
+      </mitre>
+    </rule>
+  <!-- regra acionada quando detecta que o CrossLock limpa os logs de eventos do aplicativo Visualizador de Eventos do Windows -->
+    <rule id="116160" level="14">
+      <if_sid>92032</if_sid>
+      <field name="win.eventdata.CommandLine" type="pcre2">(?i)wevtutil\s\scl\sapplication</field>
+      <description>MALWARE: CrossLock Ransomware > Logs de eventos do aplicativo 'Visualizador de Eventos do Windows' excluídos.</description>
+      <mitre>
+        <id>T1070.001</id>
+      </mitre>
+    </rule>
+  <!-- regra acionada quando detecta que o CrossLock limpa os logs de eventos de segurança no Visualizador de Eventos do Windows -->
+    <rule id="116165" level="14">
+      <if_sid>92032</if_sid>
+      <field name="win.eventdata.CommandLine" type="pcre2">(?i)wevtutil\s\scl\ssecurity</field>
+      <description>MALWARE: CrossLock Ransomware > Logs de eventos de segurança do Windows excluídos.</description>
+      <mitre>
+        <id>T1070.001</id>
+      </mitre>
+    </rule>
+  <!-- regra acionada quando detecta que o CrossLock define a política de status de inicialização para ignorar todas as falhas -->
+    <rule id="116170" level="14">
+      <if_sid>92032</if_sid>
+      <field name="win.eventdata.CommandLine" type="pcre2">(?i)bcdedit\s\s\/set\s{default}\sbootstatuspolicy\signoreallfailures</field>
+      <description>MALWARE: CrossLock Ransomware > 'Política de status de inicialização' foi definida para ignorar todas as falhas.</description>
+      <mitre>
+        <id>T1490</id>
+      </mitre>
+    </rule>
+  <!-- regra acionada quando detecta que o CrossLock limpa os logs de eventos do sistema no Visualizador de Eventos do Windows -->
+    <rule id="116175" level="14">
+      <if_sid>92032</if_sid>
+      <field name="win.eventdata.CommandLine" type="pcre2">(?i)wevtutil\s\scl\ssystem</field>
+      <description>MALWARE: CrossLock Ransomware > Logs de eventos do sistema foram excluídos!</description>
+      <mitre>
+        <id>T1070.001</id>
+      </mitre>
+    </rule>
+  <!-- regra acionada quando detecta que o CrossLock desativa o reparo automático de inicialização do Windows -->
+    <rule id="116180" level="14">
+      <if_sid>92032</if_sid>
+      <field name="win.eventdata.CommandLine" type="pcre2">(?i)bcdedit\s\s\/set\s{default} recoveryenabled\sNo</field>
+      <description>MALWARE: CrossLock Ransomware > Reparo automático de inicialização do Windows desativada!</description>
+      <mitre>
+        <id>T1490</id>
+      </mitre>
+    </rule>
+  <!-- regra acionada quando detecta que o CrossLock exclui o Catálogo de backup do sistema -->
+    <rule id="116185" level="14">
+      <if_sid>92032</if_sid>
+      <field name="win.eventdata.CommandLine" type="pcre2">(?i)wbadmin\s\sdelete\scatalog\s-quiet</field>
+      <description>MALWARE: CrossLock Ransomware > Catálogo de backup do sistema excluído!</description>
+      <mitre>
+        <id>T1490</id>
+      </mitre>
+    </rule>
+  <!-- regra acionada quando detecta que o CrossLock exclui todas as cópias de sombra dos arquivos e pastas -->
+    <rule id="116190" level="14">
+      <if_sid>92032</if_sid>
+      <field name="win.eventdata.CommandLine" type="pcre2">(?i)vssadmin\s\sdelete\sshadows\s\/all\s\/quiet</field>
+      <description>MALWARE: CrossLock Ransomware > Cópias de sombra dos arquivos e pastas excluídos!</description>
+      <mitre>
+        <id>T1490</id>
+      </mitre>
+    </rule>
+  </group>
+  <!-- MALWARE: DarkWatchman RAT -->
+  <group name="darkwatchman_rat,">
+    <!-- unidade 'C' foi adicionada à lista de exclusão do Windows Defender -->
+    <rule id="116195" level="14">
+          <if_sid>61603</if_sid>
+          <field name="win.eventdata.image" type="pcre2">powershell.exe</field>
+          <field name="win.eventdata.parentImage" type="pcre2">cmd.exe</field>
+          <field name="win.eventdata.commandLine" type="pcre2">-ExclusionPath</field>
+          <field name="win.eventdata.commandLine" type="pcre2">C:</field>
+          <description>MALWARE: DarkWatchman RAT > A unidade 'C' foi adicionada à lista de exclusão do Windows Defender.</description>
+          <mitre>
+          <id>T1562.001</id>
+        <id>T1059.001</id>
+          </mitre>
+    </rule>
+    <!-- wscript.exe gerado a partir do cmd.exe -->
+    <rule id="116200" level="14">
+          <if_sid>61603</if_sid>
+          <field name="win.eventdata.parentImage" type="pcre2">cmd.exe</field>
+          <field name="win.eventdata.image" type="pcre2">wscript.exe</field>
+          <field name="win.eventdata.commandLine" type="pcre2">jscript</field>
+          <description>MALWARE: DarkWatchman RAT > wscript.exe foi gerado a partir do cmd.exe</description>
+          <mitre>
+          <id>T1059.007 </id>
+          </mitre>
+    </rule>
+    <!-- arquivo js criado em: C:\Users\<USERNAME>\AppData\Local\Temp\ -->
+    <rule id="116205" level="14">
+          <if_group>sysmon_event_11</if_group>
+          <field name="win.eventdata.image" type="pcre2">(?i)\\wscript\.exe</field>
+          <field name="win.eventdata.targetFilename" type="pcre2">(?i)[c-z]:\\\\(Windows\\\\Temp|Users).+\.js</field>
+          <description>MALWARE: DarkWatchman RAT > Arquivo .js suspeito $(win.eventdata.targetFilename) foi criado na pasta Temp ou Users por wsript.exe.</description>
+          <mitre>
+          <id>T1059.007</id>
+          </mitre>
+    </rule>
+    <!-- Carregamento lateral de DLL por meio da execução de regsvr32.exe e um processo filho de wscript.exe -->
+    <rule id="116210" level="14">
+          <if_group>sysmon_event1</if_group>
+          <field name="win.eventdata.parentImage" type="pcre2">(?i)\\wscript\.exe</field>
+          <field name="win.eventdata.image" type="pcre2">(?i)\\regsvr32\.exe</field>
+          <field name="win.eventdata.commandLine" type="pcre2">.dll</field>
+          <field name="win.eventdata.parentCommandLine" type="pcre2">jscript</field>
+          <description>MALWARE: DarkWatchman RAT > Carregamento lateral de DLL com regsvr32.exe.</description>
+          <mitre>
+          <id>T1059.005</id>
+          </mitre>
+    </rule>
+    <!-- execução de arquivo .js -->
+    <rule id="116215" level="14">
+          <if_group>sysmon_event1</if_group>
+          <if_sid>92069</if_sid>
+          <field name="win.eventdata.image" type="pcre2">(?i)\\wscript\.exe</field>
+          <field name="win.eventdata.commandLine" type="pcre2">.js</field>
+          <description>MALWARE: DarkWatchman RAT > Arquivo .js suspeito executado.</description>
+          <mitre>
+          <id>T1059.001</id>
+          </mitre>
+    </rule>
+    <!-- os dados são gravados no registro do caminho 'DWM' -->
+    <rule id="116220" level="14" ignore="120">
+          <if_sid>61615</if_sid>
+          <field name="win.eventdata.targetObject" type="pcre2">Microsoft\\\\Windows\\\\DWM</field>
+          <description>MALWARE: DarkWatchman RAT > Dados gravados no registro: Computer\HKEY_CURRENT_USER\Software\Microsoft\Windows\DWM</description>
+    </rule>
+  </group>
+  <!-- MALWARE: LimeRAT -->
+  <group name="lime_rat,sysmon,">
+    <!-- a regra é acionada quando o LimeRAT cria um arquivo netflix.exe malicioso em C:\Users\<USERNAME>\AppData\Roaming\ -->
+    <rule id="116225" level="14">
+      <if_sid>61613</if_sid>
+      <field name="win.eventdata.image" type="pcre2">\.exe</field>
+      <field name="win.eventdata.targetFilename" type="pcre2">(?i)[c-z]:\\\\Users\\\\.+\\\\AppData\\\\Roaming\\\\checker netflix\.exe</field>
+      <description>MALWARE: LimeRAT > 'checker netflix.exe' foi criado em: $(win.eventdata.targetFilename) por $(win.eventdata.image).</description>
+      <mitre>
+        <id>T1036</id>
+      </mitre>
+    </rule>
+    <!-- a regra é acionada quando o LimeRAT define uma cópia de netflix.exe como uma chave de execução do registro -->
+    <rule id="116230" level="14">
+      <if_group>sysmon</if_group>
+      <field name="win.eventdata.details" type="pcre2">(?i)[c-z]:\\\\Users\\\\.+\\\\AppData\\\\Roaming\\\\checker netflix\.exe</field>
+      <field name="win.eventdata.targetObject" type="pcre2" >HKU\\\\.+\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run\\\\checker netflix\.exe</field>
+      <field name="win.eventdata.eventType" type="pcre2" >^SetValue$</field>
+      <description>MALWARE: LimeRAT > $(win.eventdata.details) adicionou-se ao registro em: $(win.eventdata.targetObject) para estabelecer persistência.</description>
+      <mitre>
+        <id>T1547.001</id>
+      </mitre>
+    </rule>
+    <!-- a regra é acionada quando o LimeRAT faz uma consulta DNS -->
+    <rule id="116235" level="14">
+      <if_sid>61605</if_sid>
+      <field name="win.eventdata.image" type="pcre2">(?i)[c-z]:\\\\Users\\\\.+\\\\AppData\\\\Roaming\\\\checker netflix\.exe</field>
+      <description>MALWARE: LimeRAT > Consulta DNS suspeita feita por: $(win.eventdata.image).</description>
+      <mitre>
+        <id>T1572</id>
+      </mitre>
+    </rule>
+  <!-- a regra é acionada quando o LimeRAT injeta um processo mscoreei.dll em C:\Windows\Microsoft\.NET\Framework\ -->
+  <rule id="116240" level="14" >
+      <if_sid>61609</if_sid>
+      <field name="win.eventdata.image" type="pcre2">(?i)[c-z]:\\\\Users\\\\.+\\\\AppData\\\\Roaming\\\\checker netflix\.exe</field>
+      <field name="win.eventdata.ImageLoaded" type="pcre2">(?i)[c-z]:\\\\Windows\\\\Microsoft\.NET\\\\Framework\\\\.+\\\\mscoreei\.dll</field>
+      <description>MALWARE: LimeRAT > DLL $(win.eventdata.ImageLoaded) foi injetada em: $(win.system.computer).</description>
+      <mitre>
+        <id>T1055.001</id>
+      </mitre>
+  </rule>
+    <!-- a regra é acionada quando o LimeRAT cria uma chave de registro 'disk' -->
+    <rule id="116245" level="14">
+      <if_sid>61614</if_sid>
+      <field name="win.eventdata.targetObject" type="pcre2" >HKLM\\\\System\\\\CurrentControlSet\\\\Services\\\\disk</field>
+      <field name="win.eventdata.eventType" type="pcre2" >^CreateKey$</field>
+      <description>MALWARE: LimeRAT > Serviço LimeRAT $(win.eventdata.targetObject) foi criado em: $(win.system.computer).</description>
+        <mitre>
+      <id>T1543.003</id>
+        </mitre>
+    </rule>
+  </group>
+  <!-- MALWARE: Meduza Stealer -->
+  <group name="meduza_stealer,sysmon,">
+    <!-- regra quando o Meduza Stealer cria o arquivo a.exe -->
+    <rule id="116250" level="14">
+      <if_sid>61617</if_sid>
+      <field name="win.eventdata.image" type="pcre2">\.exe</field>
+      <field name="win.eventdata.targetFilename" type="pcre2">(?i)([\\]+?)(a\.exe$)</field>
+      <description>MALWARE: Meduza Stealer > a.exe foi criado em: $(win.eventdata.targetFilename) por $(win.eventdata.image).</description>
+      <mitre>
+          <id>T1036</id>
+      </mitre>
+    </rule>
+    <!-- regra quando o Meduza Stealer cria o arquivo encryptor.dll -->
+    <rule id="116255" level="14">
+      <if_sid>61613</if_sid>
+      <field name="win.eventdata.image" type="pcre2">\.exe</field>
+      <field name="win.eventdata.targetFilename" type="pcre2">(?i)([\\]+?)(a\.exe\:extractor\.dll$)</field>
+      <description>MALWARE: Meduza Stealer > DLL $(win.eventdata.targetFilename) criada pelo arquivo a.exe em $(win.system.computer).</description>
+    </rule>
+    <!-- regra quando o Meduza Stealer cria chaves no registro -->
+    <rule id="116260" level="14">
+      <if_sid>61614</if_sid>
+      <field name="win.eventdata.image" type="pcre2">(?i)[c-z]:\\\\Windows\\\\system32\\\\(consent\.exe$|svchost\.exe$)</field>
+      <field name="win.eventdata.targetObject" type="pcre2" >HKU\\\\.+\\\\Software\\\\Microsoft\\\\SystemCertificates\\\\CA\\\\Certificates</field>
+      <field name="win.eventdata.eventType" type="pcre2" >^CreateKey$</field>
+      <description>MALWARE: Meduza Stealer > $(win.eventdata.image) fez dump das credenciais para $(win.eventdata.targetObject).</description>
+      <mitre>
+          <id>T1130</id>
+      </mitre>
+    </rule>
+    <!-- regra quando o Meduza Stealer explora as permissões do sistema de arquivos -->
+    <rule id="116265" level="14">
+      <if_sid>61613</if_sid>
+      <field name="win.eventdata.image" type="pcre2">(?i)[c-z]:\\\\Windows\\\\system32\\\\svchost\.exe</field>
+      <field name="win.eventdata.targetFilename" type="pcre2">(?i)[c-z]:\\\\Windows\\\\Prefetch\\\\(EBD41D486952EDDAA670358497F33)(-.+\.pf$)</field>
+      <description>MALWARE: Meduza Stealer > $(win.eventdata.targetFilename) criado por $(win.eventdata.image).</description>
+      <mitre>
+          <id>T1047</id>
+      </mitre>
+    </rule>
+  <!-- regra quando o Meduza Stealer executa comandos suspeitos -->
+  <rule id="116270" level="14" >
+    <if_sid>61603</if_sid>
+    <field name="win.eventdata.parentCommandLine" negate="yes" type="pcre2">(?i)[c-z]:\\\\Windows\\\\System32\\\\svchost\.exe\s-k\sWerSvcGroup</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)[c-z]:\\\\Windows\\\\system32\\\\WerFault\.exe\s-pss\s-s\s\d+\s-p\s\d+\s-ip\s\d+</field>
+    <description>MALWARE: Meduza Stealer > Comando suspeito > $(win.eventdata.commandLine).</description>
+    <mitre>
+        <id>T1546.008</id>
+      </mitre>
+  </rule> 
+  </group>
+  <!-- MALWARE: njRAT -->
+  <group name="njrat,">
+    <!-- regra acionada quando o njRAT cria um arquivo malicioso system.exe em C:\Users\*\AppData\Local\Temp --> 
+    <rule id="116275" level="14">
+      <if_sid>92213</if_sid>
+      <field name="win.eventdata.image" type="pcre2">(?i)[c-z]:(\\\\Users\\\\.+\\\\)</field>
+      <field name="win.eventdata.targetFilename" type="pcre2">(?i)[c-z]:\\\\Users\\\\.+\\\\AppData\\\\Local\\\\Temp\\\\.+\.exe</field>
+      <description>MALWARE: njRAT > Arquivo suspeito na pasta temporária.</description>
+      <mitre>
+        <id>T1105,T1036</id>
+      </mitre>
+    </rule>
+    <!-- regra acionada quando o arquivo system.exe criado em C:\Users\*\AppData\Local\Temp é executado na linha de comando. --> 
+    <rule id="116280" level="14">
+      <if_sid>61603</if_sid>
+      <field name="win.eventdata.commandLine" type="pcre2">(?i)\\\\AppData\\\\Local\\\\Temp\\\\.+\.exe</field>
+      <field name="win.eventdata.parentImage" type="pcre2">(?i)[c-z]:(\\\\Users\\\\.+\\\\)</field>
+      <field name="win.eventdata.image" type="pcre2">(?i)\\\\AppData\\\\Local\\\\Temp\\\\.+\.exe</field>
+      <field name="win.eventdata.commandLine" negate="yes" type="pcre2">.*GrammarlyInstaller.exe.*</field>
+      <field name="win.eventdata.commandLine" negate="yes" type="pcre2">(?i)\\\\Users\\\\.*\\.opera.*</field>
+      <description>Novo processo $(win.eventdata.image) iniciado pela pasta temporária.</description>
+      <mitre>
+        <id>T1105</id>
+      </mitre>
+    </rule>
+    <!-- regra acionada quando o njRAT inicia um comando Netsh para se adicionar à lista de programas permitidos -->  
+    <rule id="116285" level="14">
+      <if_sid>92042</if_sid>
+      <field name="win.eventdata.commandLine" type="pcre2">netsh firewall add allowedprogram</field>
+      <field name="win.eventdata.parentImage" type="pcre2">(?i)[c-z]:\\\\Users\\\\.+\\\\AppData\\\\Local\\\\Temp\\\\.+\.exe</field>
+      <description>MALWARE: njRAT > $(win.eventdata.parentImage) foi adicionado a lista de programas permitidos.</description>
+      <mitre>
+        <id>T1562.004</id>
+      </mitre>
+    </rule>
+    <!-- regra acionada quando o njRAT se adiciona ao registro do Windows para manter persistência-1 -->  
+    <rule id="116290" level="14" ignore="600">
+      <if_sid>92300</if_sid>
+      <field name="win.eventdata.image" type="pcre2">(?i)[c-z]:\\\\Users\\\\.+\\\\AppData\\\\Local\\\\Temp\\\\.+\.exe</field>
+      <field name="win.eventdata.eventType" type="pcre2">(?i)SetValue</field>
+      <field name="win.eventdata.targetObject" type="pcre2">(?i)\\\\SOFTWARE\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run\\\\[A-Za-z0-9]+</field>
+      <description>MALWARE: njRAT > Chaves adicionadas ao registro p/ persistência.</description>
+      <mitre>
+        <id>T1547.001</id>
+      </mitre>
+    </rule>
+    <!-- regra acionada quando o njRAT se adiciona ao registro do Windows para manter persistência-2 --> 
+    <rule id="116295" level="14" ignore="600">
+      <if_sid>92300</if_sid>
+      <field name="win.eventdata.image" type="pcre2">(?i)[c-z]:\\\\Users\\\\.+\\\\AppData\\\\Local\\\\Temp\\\\.+\.exe</field>
+      <field name="win.eventdata.eventType" type="pcre2">(?i)SetValue</field>
+      <field name="win.eventdata.targetObject" type="pcre2">(?i)\\\\WOW6432Node\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run\\\\[A-Za-z0-9]+</field>
+      <description>MALWARE: njRAT > Chaves adicionadas ao registro p/ persistência.</description>
+      <mitre>
+        <id>T1547.001</id>
+      </mitre>
+    </rule>
+    <!-- regra acionada quando o malware se adiciona aos app de inicialização para garantir persistência. -->
+    <rule id="116300" level="14">
+      <if_sid>61613</if_sid>
+      <field name="win.eventdata.image" type="pcre2">(?i)\\\\AppData\\\\Local\\\\Temp\\\\.+\.exe</field>
+      <field name="win.eventdata.targetFilename" type="pcre2">(?i)\\\\Programs\\\\Startup\\\\.+\.exe</field>
+      <description>MALWARE: njRAT > $(win.eventdata.image) foi adicionado para iniciar automático/persistência.</description>
+      <mitre>
+        <id>T1547.001</id>
+      </mitre>
+    </rule>
+    <!-- regra acionada quando o njRAT cria uma cópia de si mesmo no diretório raiz --> 
+    <rule id="116305" level="14">
+      <if_sid>61613</if_sid>
+      <field name="win.eventdata.image" type="pcre2">(?i)\\\\AppData\\\\Local\\\\Temp\\\\.+\.exe</field>
+      <field name="win.eventdata.targetFilename" type="pcre2">(?i)C:\\\\[A-Za-z]+\.[A-Za-z]+</field>
+      <description>MALWARE: njRAT > $(win.eventdata.image) criou uma cópia de si mesmo no diretório raiz.</description>
+      <mitre>
+        <id>T1105</id>
+      </mitre>
+    </rule>
+    <!-- regra acionada quando o njRAT tenta estabelecer uma conexão de rede --> 
+    <rule id="116310" level="14" ignore="600">
+      <if_sid>61650</if_sid>
+      <field name="win.system.eventID">^22$</field>
+      <field name="win.eventdata.image" type="pcre2">(?i)\\\\AppData\\\\Local\\\\Temp\\\\.+\.exe</field>
+      <field name="win.eventdata.image" negate="yes" type="pcre2">.*Microsoft.VisualStudio.Setup.Service.*</field>
+      <field name="win.eventdata.image" negate="yes" type="pcre2">.*.opera.*</field>
+      <field name="win.eventdata.image" negate="yes" type="pcre2">.*GrammarlyInstaller.exe.*</field>
+      <description>MALWARE: njRAT > DNS suspeito: $(win.eventdata.image) chamou a query: ($(win.eventdata.queryName)).</description>
+      <mitre>
+        <id>T1071</id>
+      </mitre>
+    </rule>
+    </group>
+    <!-- MALWARE: RedLine Infostealer -->
+  <group name="redline_infostealer,">
+  <!-- esta regra detecta comandos codificados do PowerShell iniciados por vbc.exe -->
+    <rule id="116315" level="14">
+      <if_sid>61603</if_sid>
+      <field name="win.eventdata.ParentImage" type="pcre2">(?i)vbc.exe</field>
+      <field name="win.eventdata.image" type="pcre2">powershell.exe</field>
+      <field name="win.eventdata.commandLine" type="pcre2">(?i)-EncodedCommand</field>
+      <description>MALWARE: RedLine Infostealer > Comandos codificados via powershell.</description>
+      <mitre>
+        <id>T1086</id>
+        <id>T1059.001</id>
+      </mitre>
+    </rule>
+  <!-- esta regra detecta quando executáveis/scripts maliciosos são baixados para C:\Users\*USERNAME*\AppData\Local\Temp\ -->
+    <rule id="116320" level="14">
+      <if_group>sysmon_eid11_detections</if_group>
+      <field name="win.eventdata.image" type="pcre2">(?i)powershell\.exe</field>
+      <field name="win.eventdata.targetFilename" type="pcre2">(?i)AppData\\\\(Roaming|local)</field>
+      <description>Powershell > processo criado: $(win.eventdata.targetFilename) em C:\Users\*USERNAME*\AppData\Local\Temp</description>
+      <mitre>
+        <id>T1105</id>
+      </mitre>
+    </rule>
+  <!-- esta regra detecta quando as pastas C:\Users\<UserProfile> e C:\Program são adicionados às listas de exclusão do Windows Defender. -->
+    <rule id="116325" level="14">
+      <if_sid>61603</if_sid>
+      <field name="win.eventdata.image" type="pcre2">powershell.exe</field>
+      <field name="win.eventdata.commandLine" type="pcre2">-ExclusionPath</field>
+      <field name="win.eventdata.commandLine" type="pcre2">UserProfile|ProgramFiles</field>
+      <description>Atividade maliciosa: C:\Users\*UserProfile* e C:\Program foram adicionadas às listas de exclusão do Windows Defender</description>
+      <mitre>
+        <id>T1204</id>
+      </mitre>
+    </rule>
+    <!-- esta regra detecta quando o malware modifica o arquivo C:\Windows\System32\drivers\etc\hosts para desativar as comunicações da vítima com os serviços antimalware. -->
+    <rule id="116330" level="14">
+      <if_sid>61613</if_sid>
+      <field name="win.eventdata.targetFilename" type="pcre2">(?i)[c-z]:\\\\Windows\\\\System32\\\\drivers\\\\etc\\\\hosts</field>
+      <field name="win.eventdata.image" type="pcre2">(?i)[c-z]:\\\\Users\\\\.+\\\\AppData\\\\Local\\\\Temp\\\\.+\.exe</field>
+      <description>Atividade suspeita: $(win.eventdata.targetFilename) foi alterado por: $(win.eventdata.image).</description>
+      <mitre>
+        <id>T1565</id>
+      </mitre>
+    </rule>
+    <!-- esta regra detecta quando o RedLine cria uma entrada no Agendador de tarefas para manter persistência. -->
+    <rule id="116335" level="14">
+      <if_sid>61603</if_sid>
+      <field name="win.eventdata.image" type="pcre2">schtasks.exe</field>
+      <field name="win.eventdata.parentImage" type="pcre2">(?i)[c-z]:\\\\Users\\\\.+\\\\AppData\\\\Local\\\\Temp\\\\.+\.exe</field>
+      <field name="win.eventdata.commandLine" type="pcre2">\.exe</field>
+      <description>Uma tarefa suspeita foi criada por: $(win.eventdata.parentImage).</description>
+      <mitre>
+        <id>T1053</id>
+      </mitre>
+    </rule>
+  </group>
+  <!-- MALWARE: Venom RAT -->
+  <group name="venom_rat,syscheck">
+    <!-- a regra é acionada quando o Venom RAT cria um arquivo svchost.exe malicioso em C:\Users\<USERNAME>\AppData\Roaming\ -->
+    <rule id="116340" level="14">
+      <if_sid>61613</if_sid>
+      <field name="win.eventdata.image" type="pcre2">\.exe</field>
+      <field name="win.eventdata.targetFilename" type="pcre2">(?i)[c-z]:\\\\Users\\\\.+\\\\AppData\\\\Roaming\\\\svchost\.exe</field>
+      <description>MALWARE: Venom RAT > svchost.exe foi criado em: $(win.eventdata.targetFilename) por $(win.eventdata.image).</description>
+      <mitre>
+        <id>T1036</id>
+      </mitre>
+    </rule>
+    <!-- a regra é acionada quando o Venom RAT faz uma cópia maliciosa de svchost.exe como uma chave no registro -->
+    <rule id="116345" level="14">
+      <if_sid>92300</if_sid>
+      <field name="win.eventdata.image" type="pcre2">(?i)[c-z]:(\\\\Users\\\\.+\\\\)</field>
+      <field name="win.eventdata.details" type="pcre2">(?i)[c-z]:\\\\Users\\\\.+\\\\AppData\\\\Roaming\\\\svchost\.exe</field>
+      <description>MALWARE: Venom RAT > $(win.eventdata.details) adicionou-se ao registro como um programa de inicialização para persistência.</description>
+      <mitre>
+        <id>T1547.001</id>
+      </mitre>
+    </rule>
+  <!-- a regra é acionada quando o Venom RAT cria um .bat.tmp em C:\Users\<USERNAME>\AppData\Local\Temp\ -->
+    <rule id="116350" level="14">
+      <if_sid>92204</if_sid>
+      <field name="win.eventdata.image" type="pcre2">\.exe</field>
+      <field name="win.eventdata.targetFilename" type="pcre2">(?i)[c-z]:\\\\Users\\\\.+\\\\AppData\\\\Local\\\\Temp\\\\.+\.tmp\.bat</field>
+      <description>MALWARE: Venom RAT > Arquivo .tmp.bat suspeito $(win.eventdata.targetFilename) adicionado a pasta Temp por: $(win.eventdata.image).</description>
+      <mitre>
+        <id>T1059</id>
+      </mitre>
+    </rule>
+  <!-- a regra é acionada quando o cmd.exe executa o arquivo .bat.tmp -->
+    <rule id="116355" level="14">
+      <if_sid>61603</if_sid>
+      <field name="win.eventdata.parentImage" type="pcre2">(?i)cmd\.exe</field>
+      <field name="win.eventdata.parentCommandLine" type="pcre2">(?i)\s\/C\s.*\.tmp\.bat</field>
+      <description>MALWARE: Venom RAT > Arquivo .tmp.bat suspeito executado pelo cmd.exe</description>
+      <mitre>
+        <id>T1087</id>
+        <id>T1059.003</id>
+      </mitre>
+    </rule>
+  </group>
+  <!-- MALWARE: Vidar Infostealer -->
+  <group name="windows,sysmon,vidar_detection_rule,">
+  <!-- esta regra é acionada quando o malware Vidar baixa arquivos DLL maliciosos no endpoint da vítima. -->
+    <rule id="116360" level="14">
+      <if_sid>61613</if_sid>
+      <field name="win.eventdata.image" type="pcre2">(?i)\\\\.+(exe|dll|bat|msi)</field>
+      <field name="win.eventdata.targetFilename" type="pcre2">(?i)\\\\ProgramData\\\\(freebl3|mozglue|msvcp140|nss3|softokn3|vcruntime140)\.dll</field>
+      <description>MALWARE: Vidar Infostealer > $(win.eventdata.targetFilename) foi baixado em: $(win.system.computer)</description>
+      <mitre>
+        <id>T1056.001</id>
+      </mitre>
+    </rule>
+  <!-- esta regra é acionada quando o malware Vidar carrega os DLL maliciosos -->
+    <rule id="116365" level="14">
+      <if_sid>61609</if_sid>
+      <field name="win.eventdata.image" type="pcre2">(?i)\\\\.+(exe|dll|bat|msi)</field>
+      <field name="win.eventdata.imageLoaded" type="pcre2">(?i)\\\\programdata\\\\(freebl3|mozglue|msvcp140|nss3|softokn3|vcruntime140)\.dll</field>
+      <description>MALWARE: Vidar Infostealer > O arquivo malicioso $(win.eventdata.imageLoaded) foi carregado por: $(win.eventdata.image)</description>
+      <mitre>
+        <id>T1574.002</id>
+      </mitre>
+    </rule>
+  <!--  esta regra é acionada quando o malware Vidar exclui a si mesmo -->
+    <rule id="116370" level="14" frequency="5" timeframe="360">
+      <if_sid>61603</if_sid>
+      <if_matched_sid>100085</if_matched_sid>
+      <field name="win.eventdata.image" type="pcre2">(?i)\\\\cmd.exe</field>
+      <match type="pcre2">cmd.exe\\" /c timeout /t \d{1,}.+del /f /q \\".+(exe|dll|bat|msi)</match>
+      <description>MALWARE: Vidar Infostealer > Excluiu a si mesmo: $(win.eventdata.parentCommandLine)</description>
+      <mitre>
+        <id>T1070.004</id>
+      </mitre>
+    </rule>
+  </group>
+  <!-- Monitorando arquivos SFX maliciosos -->
+  <group name="sfx_archives">
+  <!-- esta regra detecta quando um arquivo SFX executa instruções de linha de comando no endpoint -->
+    <rule id="116375" level="10">
+      <if_sid>61603</if_sid>
+      <field name="win.eventdata.CommandLine" type="pcre2">(?i)[C-Z]:.*.\\[7ZipRar_].*sfx.*\\*|.*\\7z.*</field>
+      <description>Arquivo descompactado suspeito: $(win.eventdata.CommandLine) chamou o aplicativo: $(win.eventdata.OriginalFileName).</description>
+      <mitre>
+        <id>T1490</id>
+      </mitre>
+    </rule>
+  <!-- esta regra detecta quando um arquivo SFX executa vários comandos para realizar diversas atividades no endpoint -->
+    <rule id="116380" level="14">
+      <if_sid>61603</if_sid>
+      <field name="win.eventdata.CurrentDirectory" type="pcre2">(?i)[C-Z]:.*.\\[7ZipRar_].*sfx.*\\*|.*\\7z.*</field>
+      <description>Arquivo descompactado suspeito: $(win.eventdata.CommandLine) executado de: $(win.eventdata.CurrentDirectory).</description>
+      <mitre>
+        <id>T1490</id>
+      </mitre>
+    </rule>
+  <!-- esta regra detecta quando um arquivo SFX cria arquivos no endpoint -->
+  <rule id="116385" level="14">
+      <if_sid>61613</if_sid>
+      <field name="win.eventdata.targetFilename" type="pcre2">(?i)[C-Z]:.*.\\[7ZipRar_].*sfx.*\\*|.*\\7z.*</field>
+      <field name="win.eventdata.targetFilename" negate="yes" type="pcre2">.*_PSScriptPolicyTest*</field>
+      <description>Arquivo descompactado suspeito: O arquivo $(win.eventdata.targetFilename) foi criado por: $(win.eventdata.image).</description>
+      <mitre>
+        <id>T1486</id>
+      </mitre>
+    </rule>
+  <!-- esta regra detecta quando um arquivo SFX cria arquivos no endpoint -->
+    <rule id="116390" level="14">
+      <if_sid>92213</if_sid>
+      <field name="win.eventdata.targetFilename" type="pcre2">(?i)[C-Z]:.*.\\[7ZipRar_].*sfx.*\\*|.*\\7z.*</field>
+      <description>Arquivo descompactado suspeito: O arquivo $(win.eventdata.targetFilename) foi criado por: $(win.eventdata.image).</description>
+      <mitre>
+        <id>T1486</id>
+      </mitre>
+    </rule>
+  <!-- esta regra detecta quando um arquivo SFX altera as confi. do registro no endpoint -->
+    <rule id="116395" level="14">
+      <if_sid>61615</if_sid>
+      <field name="win.eventdata.eventType" type="pcre2" >^SetValue$</field>
+      <field name="win.eventdata.Image" type="pcre2">(?i)[C-Z]:.*.\\[7ZipRar].*sfx.*\\.*</field>
+      <description>Arquivo descompactado suspeito: A imagem $(win.eventdata.image) fez uma alteração no registro: $(win.eventdata.targetObject).</description>   
+      <mitre>
+        <id>T1543</id>
+      </mitre>
+    </rule>
+  <!-- esta regra detecta quando um arquivo SFX carrega um arquivo imagem no endpoint -->
+    <rule id="116400" level="14">
+      <if_sid>61609</if_sid>
+      <field name="win.eventdata.ImageLoaded" type="pcre2">(?i)[C-Z]:.*.\\[7ZipRar].*sfx.*exe</field>
+      <description>Arquivo descompactado suspeito: A imagem $(win.eventdata.image) carregou o arquivo $(win.eventdata.imageLoaded).</description>
+    </rule>
+  <!-- esta regra detecta quando um arquivo SFX carrega um arquivo imagem no endpoint -->
+    <rule id="116405" level="14">
+      <if_sid>61609</if_sid>
+      <field name="win.eventdata.Image" type="pcre2">(?i)[C-Z]:.*.\\[7ZipRar].*sfx.*exe</field>
+      <description>Arquivo descompactado suspeito: Uma imagem suspeita > $(win.eventdata.image) carregou o executável $(win.eventdata.imageLoaded).</description>
+    </rule>
+  </group>
+  <!-- Detecção do SharpHound para coleta de dados do DC. -->
+  <group name="sharphound">
+  <!-- esta regra detecta que o nome 'organization name' SpecterOps que está no binário executado -->
+  <rule id="116410" level="14">
+    <if_sid>61603</if_sid>
+    <field name="win.eventdata.company" type="pcre2">^SpecterOps$</field>
+    <description>Possível atividade do Bloodhound: binário Sharphound executado!</description>
+    <mitre>
+      <id>T1033</id>
+    </mitre>
+  </rule>
+  <!-- esta regra detecta a flag CollectionMethods que às vezes é especificado durante a execução do binário -->
+  <rule id="116415" level="14">
+    <if_sid>61603</if_sid>
+    <field name="win.eventdata.parentImage" type="pcre2">(?i)[c-z]:\\\\Windows\\\\System32\\\\.+\\\\(powershell|cmd)\.exe</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)((--CollectionMethods\s)((.+){1,12})|(\s(--Loop)))</field>
+    <description>Possível atividade do Bloodhound: flag 'CollectionMethods' detectado!</description>
+    <mitre>
+      <id>T1059.00</id>
+      <id>T1033</id>
+    </mitre>
+  </rule>  
+  <!-- esta regra detecta a execução do cmdlet Sharphound PowerShell -->
+  <rule id="116420" level="14">
+    <if_sid>61603</if_sid>
+    <field name="win.eventdata.parentImage" type="pcre2">(?i)[c-z]:\\\\Windows\\\\System32\\\\.+\\\\(powershell|cmd)\.exe</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)((invoke-bloodhound\s)|(get-bloodHounddata\s))</field>
+    <description>Possível atividade do Bloodhound: Sharphound Powershell detectado!</description>
+    <mitre>
+      <id>T1059.00</id>
+      <id>T1033</id>
+    </mitre>
+  </rule>
+  <!-- esta regra detecta tentativas feitas por um executável para consultar LDAP -->
+  <rule id="116425" timeframe="1" level="14">
+    <if_sid>61605</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)^[c-z](([^\\]+?)(.*)(\.exe|ps1)$)</field>
+    <field name="win.eventdata.destinationPort" type="pcre2">^389$</field>
+    <description>Query LDAP detectada pelo binário: $(win.eventdata.image) em $(name).</description>
+    <mitre>
+      <id>T1560</id>
+    </mitre>
+  </rule>
+  <!-- Esta regra detecta a criação de arquivos JSON contendo informações sensíveis do AD -->
+  <rule id="116430" timeframe="2" frequency="2" level="14">
+    <if_sid>61613</if_sid>
+    <field name="win.eventdata.image" type="pcre2">\.exe</field>
+    <field name="win.eventdata.targetFilename" type="pcre2">(?i)([^\\]+?)(_computers\.json$|_domains\.json$|_ous\.json$|_users\.json$|_groups\.json$|_containers\.json$|_gpos\.json$)</field>
+    <description>Possível atividade do Bloodhound: O arquivo $(win.eventdata.targetFilename) foi criado por: $(win.eventdata.image).</description>
+    <mitre>
+      <id>T1036</id>
+    </mitre>
+  </rule>
+  <!-- Esta regra detecta a criação de um arquivo zip por um executável -->
+  <rule id="116435" level="14">
+    <if_sid>61613</if_sid>
+    <field name="win.eventdata.image" type="pcre2">\.exe</field>
+    <field name="win.eventdata.targetFilename" type="pcre2">(?i)[c-z]:\\.*?([^\\]+\.(zip))$</field>
+    <description>Arquivo zip criado: $(win.eventdata.targetFilename) por: $(win.eventdata.image).</description>
+    <mitre>
+      <id>T1560</id>
+    </mitre>
+  </rule>
+  </group>
+  <group name="nullsession-connection">
+  <!-- Esta regra detecta tentativas de enumerar o DC por meio de conexões de sessão nula -->
+  <rule id="116440" frequency="2" timeframe="3" level="14">
+    <if_sid>60103</if_sid>
+    <field name="win.system.eventID" type="pcre2">^5145$</field>
+    <field name="win.eventdata.relativeTargetName" type="pcre2">^srvsvc|lsarpc|samr$</field>
+    <field name="win.eventdata.subjectUserName" type="pcre2">^(?!.*\$$).*$</field>
+    <description>Possível enumeração de serviço de rede por: $(win.eventdata.subjectUserName) mirando em: $(win.eventdata.relativeTargetName).</description>
+    <mitre>
+      <id>T1087</id>
+    </mitre>
+  </rule>
+  </group>
+  <!-- DNSFilter -->
+  <group name="dnsfilter,">
+    <rule id="116445" level="7">
+      <decoded_as>dnsfilter-detecção</decoded_as>
+      <description>DNSFilter: Usuário $(dstuser) acessou o domínio: $(domain)</description>
+    </rule>
+  </group>
+  <!-- Crowdstrike -->
+  <group name="crowdstrike">
+    <rule id="116450" level="0">
+      <decoded_as>json</decoded_as>
+      <field name="metadata.customerIDString">\.+</field>
+      <field name="metadata.offset">\.+</field>
+      <field name="metadata.eventType">\.+</field>
+      <field name="metadata.eventCreationTime">\.+</field>
+      <field name="metadata.version">\.+</field>
+      <description>Crowdstrike parent alert</description>
+    </rule>
+    <rule id="116455" level="0">
+      <if_sid>116450</if_sid>
+      <field name="metadata.eventType">DetectionSummaryEvent</field>
+      <description>Crowdstrike alert - DetectionSummaryEvent:- $(event.DetectDescription)</description>
+    </rule>
+    <rule id="116460" level="0">
+      <if_sid>116450</if_sid>
+      <field name="metadata.eventType">AuthActivityAuditEvent</field>
+      <description>Crowdstrike alert - AuthActivityAuditEvent: $(event.DetectDescription)</description>
+    </rule>
+    <rule id="116465" level="3">
+      <if_sid>116450</if_sid>
+      <field name="metadata.eventType">UserActivityAuditEvent</field>
+      <description>Crowdstrike alert - UserActivityAuditEvent: $(event.OperationName)</description>
+    </rule>
+    <rule id="116470" level="5">
+      <if_sid>116450</if_sid>
+      <field name="metadata.eventType">IncidentSummaryEvent</field>
+      <description>Crowdstrike alert - IncidentSummaryEvent: $(event.DetectDescription)</description>
+    </rule>
+    <rule id="116475" level="3">
+      <if_sid>116455</if_sid>
+      <field name="event.SeverityName">Low</field>
+      <description>Crowdstrike alert - Low severity detection: $(event.DetectDescription)</description>
+    </rule>
+    <rule id="116480" level="5">
+      <if_sid>116455</if_sid>
+      <field name="event.SeverityName">Medium</field>
+      <description>Crowdstrike alert - Medium severity detection: $(event.DetectDescription)</description>
+    </rule>
+    <rule id="116485" level="7">
+      <if_sid>116455</if_sid>
+      <field name="event.SeverityName">High</field>
+      <description>Crowdstrike alert - High severity detection: $(event.DetectDescription)</description>
+    </rule>
+    
+    <rule id="116490" level="3">
+    	<if_sid>116460</if_sid>
+    	<field name="event.Success">true</field>
+    	<description>Crowdstrike alert - User authentication success - através do IP $(event.UserIp)</description>
+    	<group>authentication_success,pci_dss_10.2.5,gpg13_7.1,gpg13_7.2,gdpr_IV_32.2,hipaa_164.312.b,nist_800_53_AU.14,nist_800_53_AC.7,tsc_CC6.8,tsc_CC7.2,tsc_CC7.3,</group>
+    </rule>
+    
+    <rule id="116495" level="6">
+      <if_sid>116460</if_sid>
+      <field name="event.Success">false</field>
+      <description>Crowdstrike alert - User authentication failed - UserId: $(event.UserId)</description>
+      <group>authentication_failed,pci_dss_10.2.4,pci_dss_10.2.5,gpg13_7.1,gpg13_7.5,gdpr_IV_35.7.d,gdpr_IV_32.2,hipaa_164.312.b,nist_800_53_AU.14,nist_800_53_AC.7,tsc_CC6.1,tsc_CC6.8,tsc_CC7.2,tsc_CC7.3,</group>
+    </rule>
+  </group>
+  <!-- ABUSE IP -->
+  <group name="abuseipdb">
+    <rule id="116500" level="5">
+      <if_sid>5716</if_sid>
+      <match type="pcre2">\b(?!(10)|192\.168|172\.(2[0-9]|1[6-9]|3[0-1])|(25[6-9]|2[6-9][0-9]|[3-9][0-9][0-9]|99[1-9]))[0-9]{1,3}\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)</match>
+      <description>sshd: Authentication failed from a public IP address $(srcip).</description>
+      <group>authentication_failed,authentication_success,pci_dss_10.2.4,pci_dss_10.2.5,</group>
+    </rule>
+    <rule id="116505" level="5">
+      <if_sid>5715</if_sid>
+      <match type="pcre2">\b(?!(10)|192\.168|172\.(2[0-9]|1[6-9]|3[0-1])|(25[6-9]|2[6-9][0-9]|[3-9][0-9][0-9]|99[1-9]))[0-9]{1,3}\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)</match>
+      <description>sshd: Authentication succeeded from a public IP address $(srcip).</description>
+      <group>authentication_failed,authentication_success,pci_dss_10.2.4,pci_dss_10.2.5,</group>
+    </rule>
+    <rule id="116510" level="10">
+      <field name="abuseipdb.source.rule" type="pcre2">^100002$</field>
+      <field name="abuseipdb.abuse_confidence_score" type="pcre2" negate="yes">^0$</field>
+      <description>AbuseIPDB: SSH Authentication failed from a public IP address $(srcip) with $(abuseipdb.abuse_confidence_score)% confidence of abuse.</description>
+      <group>authentication_failed,pci_dss_10.2.4,pci_dss_10.2.5,</group>
+    </rule>
+    <rule id="116515" level="14">
+      <field name="abuseipdb.source.rule" type="pcre2">^100003$</field>
+      <field name="abuseipdb.abuse_confidence_score" type="pcre2" negate="yes">^0$</field>
+      <description>AbuseIPDB: SSH Authentication succeeded from a public IP address $(srcip) with $(abuseipdb.abuse_confidence_score)% confidence of abuse.</description>
+      <group>authentication_failed,pci_dss_10.2.4,pci_dss_10.2.5,</group>
+    </rule>
+  </group>
+  <!-- Google Workspace -->
+  <group name="gcp,google_workspace,">
+    <rule id="116520" level="3">
+      <if_sid>65042</if_sid>
+      <field name="gcp.protoPayload.methodName">^google.apps.cloudidentity.groups.v1.MembershipsService.UpdateMembership$</field>
+      <field name="gcp.protoPayload.metadata.membershipDelta.roleDeltas">BLOCKED</field>
+      <field name="gcp.protoPayload.metadata.membershipDelta.roleDeltas">ADD</field>
+      <description>$(data.gcp.protoPayload.metadata.membershipDelta.member) blocked from $(gcp.protoPayload.metadata.group) by $(gcp.protoPayload.authenticationInfo.principalEmail)</description>
+    </rule>
+    <rule id="116525" level="3">      
+      <if_sid>65042</if_sid>      
+      <field name="gcp.protoPayload.methodName">^google.apps.cloudidentity.groups.v1.MembershipsService.UpdateMembership$</field>      
+      <field name="gcp.protoPayload.metadata.membershipDelta.roleDeltas">BLOCKED</field>      
+      <field name="gcp.protoPayload.metadata.membershipDelta.roleDeltas">REMOVE</field>      
+      <description>$(data.gcp.protoPayload.metadata.membershipDelta.member) unblocked from $(gcp.protoPayload.metadata.group) by $(gcp.protoPayload.authenticationInfo.principalEmail)</description>  
+      <mitre>  
+          <id>T1539</id>  
+      </mitre>  
+  </rule>      
+  <rule id="116530" level="3">      
+      <if_sid>65042</if_sid>      
+      <field name="gcp.protoPayload.methodName">^google.apps.cloudidentity.groups.v1.MembershipsService.UpdateMembership$</field>      
+      <field name="gcp.protoPayload.metadata.membershipDelta.roleDeltas">MEMBER</field>      
+      <field name="gcp.protoPayload.metadata.membershipDelta.roleDeltas">ADD</field>      
+      <description>$(gcp.protoPayload.metadata.membershipDelta.member) added to $(gcp.protoPayload.metadata.group) by $(gcp.protoPayload.authenticationInfo.principalEmail)</description>  
+      <mitre>  
+          <id>T1078</id>  
+      </mitre>  
+  </rule>      
+  <rule id="116535" level="3">      
+      <if_sid>65042</if_sid>      
+      <field name="gcp.protoPayload.methodName">^google.apps.cloudidentity.groups.v1.MembershipsService.UpdateMembership$</field>      
+      <field name="gcp.protoPayload.metadata.membershipDelta.roleDeltas">MEMBER</field>      
+      <field name="gcp.protoPayload.metadata.membershipDelta.roleDeltas">REMOVE</field>      
+      <description>$(gcp.protoPayload.metadata.membershipDelta.member) removed from $(gcp.protoPayload.metadata.group) by $(gcp.protoPayload.authenticationInfo.principalEmail)</description>  
+      <mitre>  
+          <id>T1078</id>  
+      </mitre>  
+  </rule>      
+  <rule id="116540" level="3">      
+      <if_sid>65042</if_sid>      
+      <field name="gcp.protoPayload.methodName">^google.login.LoginService.loginSuccess$</field>      
+      <description>User $(gcp.protoPayload.authenticationInfo.principalEmail) logged in</description>  
+      <mitre>  
+          <id>T1078</id>  
+      </mitre>  
+  </rule>      
+  <rule id="116545" level="3">      
+      <if_sid>65042</if_sid>      
+      <field name="gcp.protoPayload.methodName">^google.login.LoginService.loginVerification$</field>      
+      <description>User $(gcp.protoPayload.authenticationInfo.principalEmail) went through login verification</description>  
+      <mitre>  
+          <id>T1078</id>  
+      </mitre>  
+  </rule>      
+  <rule id="116550" level="3">      
+      <if_sid>65042</if_sid>      
+      <field name="gcp.protoPayload.methodName">^google.login.LoginService.logout$</field>      
+      <description>User $(gcp.protoPayload.authenticationInfo.principalEmail) logged out</description>  
+      <mitre>  
+          <id>T1078</id>  
+      </mitre>  
+  </rule>      
+  <rule id="116555" level="3">      
+      <if_sid>65042</if_sid>      
+      <field name="gcp.protoPayload.methodName">^google.admin.AdminService.removeGroupMember$</field>      
+      <description>User removed from a group by an administrator</description>  
+      <mitre>  
+          <id>T1078</id>  
+      </mitre>  
+  </rule>      
+  <rule id="116560" level="3">      
+      <if_sid>65042</if_sid>      
+      <field name="gcp.protoPayload.methodName">^google.admin.AdminService.addGroupMember$</field>      
+      <description>User added to a group by an administrator</description>  
+      <mitre>  
+          <id>T1078</id>  
+      </mitre>  
+  </rule>      
+  <rule id="116565" level="3">      
+      <if_sid>65042</if_sid>      
+      <field name="gcp.protoPayload.methodName">^google.login.LoginService.recoveryEmailEdit$</field>      
+      <description>User $(gcp.protoPayload.authenticationInfo.principalEmail) updated their recovery e-mail</description>  
+      <mitre>  
+          <id>T1111</id>  
+      </mitre>  
+  </rule>      
+  <rule id="116570" level="3">      
+      <if_sid>65042</if_sid>      
+      <field name="gcp.protoPayload.methodName">^google.login.LoginService.2svEnroll$</field>      
+      <description>User $(gcp.protoPayload.authenticationInfo.principalEmail) enrolled in two factor authentication</description>  
+      <mitre>  
+          <id>T1111</id>  
+      </mitre>  
+  </rule>      
+  <rule id="116575" level="3">      
+      <if_sid>65042</if_sid>      
+      <field name="gcp.protoPayload.methodName">^google.login.LoginService.passwordEdit$</field>      
+      <description>User $(gcp.protoPayload.authenticationInfo.principalEmail) updated their password</description>  
+      <mitre>  
+          <id>T1111</id>  
+      </mitre>  
+  </rule>      
+  <rule id="116580" level="3">      
+      <if_sid>65042</if_sid>      
+      <field name="gcp.protoPayload.methodName">^google.admin.AdminService.createUser$</field>      
+      <description>User created by administrator $(gcp.protoPayload.authenticationInfo.principalEmail)</description>  
+      <mitre>  
+          <id>T1136</id>  
+      </mitre>  
+  </rule>      
+  <rule id="116585" level="3">      
+      <if_sid>65042</if_sid>      
+      <field name="gcp.protoPayload.methodName">^google.admin.AdminService.emailLogSearch$</field>      
+      <description>E-mail log search accessed by $(gcp.protoPayload.authenticationInfo.principalEmail)</description>  
+      <mitre>  
+          <id>T1112</id>  
+      </mitre>  
+  </rule>      
+  <rule id="116590" level="3">      
+      <if_sid>65042</if_sid>      
+      <field name="gcp.protoPayload.methodName">^google.admin.AdminService.downloadUserlistCsv$</field>      
+      <description>User list downloaded as CSV by $(gcp.protoPayload.authenticationInfo.principalEmail)</description>  
+      <mitre>  
+          <id>T1112</id>  
+      </mitre>  
+  </rule>      
+  <rule id="116595" level="3">      
+      <if_sid>65042</if_sid>      
+      <field name="gcp.protoPayload.methodName">^google.login.LoginService.loginFailure$</field>      
+      <description>User $(gcp.protoPayload.authenticationInfo.principalEmail) failed to log in</description>  
+      <mitre>  
+          <id>T1078</id>  
+      </mitre>  
+  </rule>      
+  <rule id="116600" level="3">      
+      <if_sid>65042</if_sid>      
+      <field name="gcp.protoPayload.methodName">^google.admin.AdminService.changeGroupSetting$</field>      
+      <description>Group settings modified by $(gcp.protoPayload.authenticationInfo.principalEmail)</description>  
+      <mitre>  
+          <id>T1098</id>  
+      </mitre>  
+  </rule>      
+  <rule id="116605" level="3">      
+      <if_sid>65042</if_sid>      
+      <field name="gcp.protoPayload.methodName">^CreateProject$</field>      
+      <description>Project created</description>  
+      <mitre>  
+          <id>T1136</id>  
+      </mitre>  
+  </rule>
+      <rule id="116610" level="3">      
+      <if_sid>65042</if_sid>      
+      <field name="gcp.protoPayload.methodName">^google.login.LoginService.recoveryPhoneEdit$</field>      
+      <description>User $(gcp.protoPayload.authenticationInfo.principalEmail) updated their recovery phone number</description>  
+      <mitre>  
+          <id>T1111</id>  
+      </mitre>  
+  </rule>      
+  <rule id="116615" level="3">      
+      <if_sid>65042</if_sid>      
+      <field name="gcp.protoPayload.methodName">^google.admin.AdminService.addNickname$</field>      
+      <description>E-mail alias created for user by administrator $(gcp.protoPayload.authenticationInfo.principalEmail)</description>  
+      <mitre>  
+          <id>T1136</id>  
+      </mitre>  
+  </rule>      
+  <rule id="116620" level="3">      
+      <if_sid>65042</if_sid>      
+      <field name="gcp.protoPayload.methodName">^google.admin.AdminService.userLicenseAssignment$</field>      
+      <description>Licence assigned to user</description>  
+      <mitre>  
+          <id>T1136</id>  
+      </mitre>  
+  </rule>      
+  <rule id="116625" level="3">      
+      <if_sid>65042</if_sid>      
+      <field name="gcp.protoPayload.methodName">^google.admin.AdminService.alertCenterView$</field>      
+      <description>Alert centre viewed by administrator $(gcp.protoPayload.authenticationInfo.principalEmail)</description>  
+      <mitre>  
+          <id>T1112</id>  
+      </mitre>  
+  </rule>      
+  <rule id="116630" level="3">      
+      <if_sid>65042</if_sid>      
+      <field name="gcp.protoPayload.methodName">^google.login.LoginService.loginChallenge$</field>      
+      <description>User $(gcp.protoPayload.authenticationInfo.principalEmail) went through login challenge</description>  
+      <mitre>  
+          <id>T1078</id>  
+      </mitre>  
+  </rule>      
+  <rule id="116635" level="7">      
+      <if_sid>65042</if_sid>      
+      <field name="gcp.protoPayload.methodName">^google.login.LoginService.riskySensitiveActionAllowed$</field>      
+      <description>User $(gcp.protoPayload.authenticationInfo.principalEmail) allowed a risky sensitive action</description>  
+      <mitre>  
+          <id>T1078</id>  
+      </mitre>  
+  </rule>      
+  <rule id="116640" level="7">      
+      <if_sid>65042</if_sid>      
+      <field name="gcp.protoPayload.methodName">^google.admin.AdminService.changePassword$</field>      
+      <description>Password reset for user by administrator $(gcp.protoPayload.authenticationInfo.principalEmail)</description>  
+      <mitre>  
+          <id>T1111</id>  
+      </mitre>  
+  </rule>      
+  <rule id="116645" level="7">      
+      <if_sid>65042</if_sid>      
+      <field name="gcp.protoPayload.methodName">^google.admin.AdminService.changePasswordOnNextLogin$</field>      
+      <description>Password set to be changed on next login for user by administrator $(gcp.protoPayload.authenticationInfo.principalEmail)</description>  
+      <mitre>  
+          <id>T1111</id>  
+      </mitre>  
+  </rule>      
+  <rule id="116650" level="3">      
+      <if_sid>65042</if_sid>      
+      <field name="gcp.protoPayload.methodName">^google.apps.cloudidentity.groups.v1.MembershipsService.UpdateMembership$</field>      
+      <field name="gcp.protoPayload.metadata.membershipDelta.roleDeltas">MANAGER</field>      
+      <field name="gcp.protoPayload.metadata.membershipDelta.roleDeltas">ADD</field>      
+      <description>$(gcp.protoPayload.metadata.membershipDelta.member) set as manager for $(gcp.protoPayload.metadata.group) by $(gcp.protoPayload.authenticationInfo.principalEmail)</description>  
+      <mitre>  
+          <id>T1078</id>  
+      </mitre>  
+  </rule>      
+  <rule id="116655" level="3">      
+      <if_sid>65042</if_sid>      
+      <field name="gcp.protoPayload.methodName">^google.apps.cloudidentity.groups.v1.MembershipsService.UpdateMembership$</field>      
+      <field name="gcp.protoPayload.metadata.membershipDelta.roleDeltas">MANAGER</field>      
+      <field name="gcp.protoPayload.metadata.membershipDelta.roleDeltas">REMOVE</field>      
+      <description>$(gcp.protoPayload.metadata.membershipDelta.member) removed as manager for $(gcp.protoPayload.metadata.group) by $(gcp.protoPayload.authenticationInfo.principalEmail)</description>  
+      <mitre>  
+          <id>T1078</id>  
+      </mitre>  
+  </rule>
+  </group>
+  <!-- Cisco IOS -->
+  <group name="syslog,cisco_ios,">
+    <rule id="116660" level="3" overwrite="yes">
+      <if_sid>4716</if_sid>
+          <match>ASA-6-716039</match>
+      <description>FW-ASA - Autenticação na VPN rejeitada</description>
+    </rule>
+    <rule id="116665" level="3" overwrite="yes">
+      <if_sid>4716</if_sid>
+          <match>ASA-6-302016</match>
+      <description>FW-ASA - Drop de Conexão UDP na VPN</description>
+    </rule>
+    </group>
+  <!-- RULES Kaspersky -->
+  <group name="kaspersky">
+  <!-- Rule de objeto bloqueado pelo Kaspersky.
+  2023-09-17T04:51:24.042451-03:00 10.15.18.33 CEF: 0|KasperskyLab|SecurityCenter|13.0.0.11247|GNRL_EV_OBJECT_BLOCKED|Object download was blocked|2|msg=Result description: Blocked\r\nType: Contains adware, auto-dialers, legitimate software that can be used by criminals to damage your computer or personal data\r\nName: not-a-virus:HEUR:AdWare.Script.Pusher.gen\r\nUser: PORTONAVE\\sipereira (Active user)\r\nObject: https://www.softonic.com.br\\\\sw.enot.js\\r\\nDatabase release date: 16/09/2023 17:14:00\r\nSHA256: 199E96AF3A1B82AB8F0B68994583311BBD7C21EAB4D7BE36F4ABEBFE315D2D4E\r\nMD5: C210B5EA84221C6D8AFB68A3AC6C7F5D rt=1694937030000 cs9=Desktops cs9Label=GroupName dhost=8607-D dst=10.20.14.71 cs2=KES cs2Label=ProductName cs3=11.0.0.0 cs3Label=ProductVersion cs10=Web Threat Protection cs10Label=TaskName filePath=https://www.softonic.com.br/sw.enot.js duser=PORTONAVE\\sipereira
+  -->
+  <rule id="116670" level="15">
+  <match offset="after_parent">\|GNRL_EV_OBJECT_BLOCKED\|Object download was blocked\|2\|msg=</match>
+  <regex offset="after_prematch">Blocked\\r\\nType: (\D+)\\r\\nName:(\.)\\r\\nUser:(\.)\\r\\nObject:(\s\w+\D+\\\\)\S+\\r\\nDatabase release date: (\S+ \S+)\\r\\nSHA256: (\w+)\\r\\nMD5: (\w+) rt=\S+ cs9=\w+ cs9Label=(\w+) dhost=(\S+) dst=(\d+.\d+.\d+.\d+)</regex>
+  <description>Bloqueado: $(msg). O usuario:$(usuario) programa: $(Name). Hash: MD5: $(MD5) / SHA256: $(SHA256) data/hora: $(data_horario). Hostname: $(dhost). IP: $(dst) URL$(URL)</description>
+  </rule>
+  <!-- Rule de objeto instalado pelo Kaspersky.
+  2023-09-17T03:50:47.442813-03:00 10.15.18.33 CEF: 0|KasperskyLab|SecurityCenter|13.0.0.11247|KLNAG_EV_INV_APP_INSTALLED|Application has been installed.|1|msg=Brave version 117.1.58.127 has been installed. rt=1694933382000 cs9=BitLocker PNV - Criptografar cs9Label=GroupName dhost=14734-N dst=10.99.1.183 cs2=1103 cs2Label=ProductName cs3=1.0.0.0 cs3Label=ProductVersion fname=Brave fileType=application
+  -->
+  <rule id="116675" level="5">
+  <match>KLNAG_EV_INV_APP_INSTALLED|Application has been installed.\|1\|msg=(.*)</match>
+  <regex>msg=(\D+\D+)\sversion (\S+) has been installed. rt=\S+ cs9=(\D+) cs9Label=GroupName dhost=(\S+) dst=(\d+.\d+.\d+.\d+)</regex>
+  <description>Aplicativo instalado com exito $(programa) versao $(versao) no hostname:$(dhost) no IP de destino $(destino)</description>
+  </rule>
+  <!-- Rule de objeto desinstalado pelo Kaspersky.
+  2023-09-17T03:20:44.189702-03:00 10.15.18.33 CEF: 0|KasperskyLab|SecurityCenter|13.0.0.11247|KLNAG_EV_INV_APP_UNINSTALLED|Application has been uninstalled.|1|msg=Google Chrome version 117.0.5938.62 has been uninstalled. rt=1694930575000 cs9=BitLocker PNV - Criptografar cs9Label=GroupName dhost=14738-N~~2471219 dst=10.15.14.55 cs2=1103 cs2Label=ProductName cs3=1.0.0.0 cs3Label=ProductVersion fname=Google Chrome fileType=application
+  2023-09-17T04:13:50.101899-03:00 10.15.18.33 CEF: 0|KasperskyLab|SecurityCenter|13.0.0.11247|KLNAG_EV_INV_APP_UNINSTALLED|Application has been uninstalled.|1|msg=Microsoft Edge version 116.0.1938.81 has been uninstalled. rt=1694934324000 cs9=Bitlocker PNV- Descriptografia cs9Label=GroupName dhost=14603-d.portonave.com.br dst=172.16.0.103 cs2=1103 cs2Label=ProductName cs3=1.0.0.0 cs3Label=ProductVersion fname=Microsoft Edge fileType=application
+  -->
+  <rule id="116680" level="5">
+  <match>KLNAG_EV_INV_APP_UNINSTALLED|Application\shas\sbeen\suninstalled.\|1\|msg=(.*)</match>
+  <regex>msg=(\D\D+)\sversion (\S+) has been uninstalled. rt=\w+\scs9=(\w+\S+ \w+\D+)\S+ dhost=(\S+) dst=(\d+.\d+.\d+.\d+)</regex>
+  <description>Aplicativo desinstalado com exito $(Deletado) versao: $(versao) no hostname: $(dhost) no IP de destino $(destino)</description>
+  </rule>
+  <!-- Rule de objeto Virus detecato pelo Kaspersky.
+  2023-09-17T04:51:24.042451-03:00 10.15.18.33 CEF: 0|KasperskyLab|SecurityCenter|13.0.0.11247|GNRL_EV_VIRUS_FOUND|Detected legitimate software that can be used by intruders to damage your computer or personal data.|2|msg=Result description: Detected\r\nType: Contains adware, auto-dialers, legitimate software that can be used by criminals to damage your computer or personal data\r\nName: not-a-virus:HEUR:AdWare.Script.Pusher.gen\r\nUser: PORTONAVE\\sipereira (Active user)\r\nObject: https://www.softonic.com.br\\\\sw.enot.js\\r\\nReason: Expert analysis\r\nDatabase release date: 16/09/2023 17:14:00\r\nSHA256: 199E96AF3A1B82AB8F0B68994583311BBD7C21EAB4D7BE36F4ABEBFE315D2D4E\r\nMD5: C210B5EA84221C6D8AFB68A3AC6C7F5D rt=1694937030000 cs9=Desktops cs9Label=GroupName dhost=8607-D dst=10.20.14.71 cs2=KES cs2Label=ProductName cs3=11.0.0.0 cs3Label=ProductVersion cs10=Web Threat Protection cs10Label=TaskName cs4=199E96AF3A1B82AB8F0B68994583311BBD7C21EAB4D7BE36F4ABEBFE315D2D4E cs4Label=SHA256 filePath=https://www.softonic.com.br/sw.enot.js cs1=not-a-virus:HEUR:AdWare.Script.Pusher.gen cs1Label=VirusName duser=PORTONAVE\\sipereira
+  -->
+  <rule id="116685" level="15">
+  <match>GNRL_EV_VIRUS_FOUND|Detected legitimate software that can be used by intruders to damage your computer or personal data.\|2\|msg=(.)</match>
+  <regex>nType:(\D+)\\r\\nName(\D+)\\r\\nUser:(\D+)\\r\\nObject:(\D+)\\r\\nReason:\D+\\r\\nDatabase release date:(\.*)\\r\\nSHA256: (\w+)\\r\\nMD5: (\w+) rt=\w+ cs9=(\w+) cs9Label=GroupName dhost=(\S+) dst=(\d+.\d+.\d+.\d+)</regex>
+  <description>Vírus detectado $(Type)! Usuario: $(usuario) Data: $(Database) MD5: $(MD5) host:$(host) hostname: $(dhost) IP: $(destino) URL:$(URL).</description>
+  </rule>
+  </group>
+  <!-- FIM RULES Kaspersky -->
+  <group name="jumpcloud,">
+      <rule id="867000" level="12">
+          <decoded_as>json</decoded_as>
+          <field name="prefixo">src_ip_diferente</field>
+          <description>Jumpcloud: Primeiro login identificado do usuário $(usuario) pelo IP $(srcip)</description>
+      </rule>
+      <rule id="867001" level="15" frequency="3" timeframe="1800">
+          <if_matched_sid>867000</if_matched_sid>
+          <field name="ip_de_origem">8.39.144.\d+|31.186.239.\d+|163.116.\d+.\d+|8.36.116.\d+|162.100.\d+.\d+</field>
+          <different_srcip/>
+          <description>Jumpcloud: Terceiro Login realizado pelo usuário $(usuario) com IP diferente</description>
+      </rule>
+      
+      <rule id="867002" level="12">
+          <decoded_as>json</decoded_as>
+          <field name="prefixo">maquina_diferente</field>
+          <description>Jumpcloud: O usuário $(usuario) logou em uma máquina diferente.</description>
+      </rule>
+    
+  </group>
+  <group name="virustotal-int,">
+        <rule id="868000" level="14">
+            <decoded_as>json</decoded_as>
+            <field name="Malicioso.IoC">\.+</field>
+            <description>VirusTotal: Detecção de possível IoC $(Malicioso.IoC) no evento $(Malicioso.id).</description>
+        </rule>
+</group>
+
+<group name="security_hub,">
+        <rule id="868100" level="14">
+            <decoded_as>json</decoded_as>
+            <field name="source">aws.securityhub</field>
+            <description>aws.securityhub</description>
+        </rule>
+  </group>
+
+  <group name="geral,">
+        <rule id="868101" level="14">
+            <decoded_as>json</decoded_as>
+            <field name="source" type="pcre2">.*</field>
+            <description>aws.securityhub: Alerta Generico</description>
+        </rule>
+  </group> 
