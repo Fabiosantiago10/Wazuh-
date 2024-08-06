@@ -1,0 +1,130 @@
+<!-- Modify it at your will. -->
+<group name="netskope_events,">
+    <rule id="886000" level="0">
+        <decoded_as>netskope_events</decoded_as>
+        <description>Evento Netskope: Alerta Generico</description>
+    </rule>
+    <rule id="886001" level="3">
+        <if_sid>886000</if_sid>
+        <field name="netskope.events.activity.name" type="pcre2">.*</field>
+        <field name="netskope.events.page" type="pcre2">.*</field>
+        <description>Evento Netskope: $(data.netskope.events.activity.name) - $(data.netskope.events.page)</description>
+    </rule>
+
+    
+</group>
+
+<group name="netskope_alerts,">
+    <rule id="876000" level="0">
+        <decoded_as>netskope_alerts</decoded_as>
+        <description>Alerta Netskope: Alerta Generico</description>
+    </rule>
+    
+    <rule id="876001" level="3">
+    <if_sid>876000</if_sid>
+        <field name="netskope.events.activity.name" type="pcre2">Download</field>
+        <description>Alerta Netskope: Potencial violação de DLP detectada, Usuário $(user.email.2) download arquivo $(netskope.events.url).</description>
+    </rule>
+    
+    <rule id="886002" level="9">
+    <if_sid>876000</if_sid>
+        <field name="netskope.alerts.action" type="pcre2">block</field>
+    <description>Alerta Netskope: Site bloqueado, politica violada. Usuário $(user.email.1) tentou acessar $(netskope.alerts.app.name).</description>
+    </rule>
+    
+    <rule id="886003" level="3">
+    <if_sid>886002</if_sid>
+        <field name="netskope.alerts.app.name" type="pcre2">DNS Over HTTPS</field>
+    <description>Alerta Netskope: Site bloqueado, politica violada - Teste-Acesso-Contexto-Block.</description>
+    </rule>
+    
+    <rule id="876004" level="3">
+    <if_sid>876000</if_sid>
+        <field name="netskope.alerts.alert.name" type="pcre2">G-DRIVE LGPD</field>
+        <description>Alerta Netskope: politica DLP violada - Google Drive (G-DRIVE LGPD), usuário $(netskope.alerts.owner)</description>
+    </rule>
+    
+    <rule id="876005" level="3">
+    <if_sid>876000</if_sid>
+        <field name="netskope.alerts.activity.name" type="pcre2">Download</field>
+        <field name="netskope.alerts.site" type="pcre2">WhatsApp</field>
+        <description>Alerta Netskope: Download de arquivo via WhatsApp</description>
+    </rule>
+    
+    <rule id="876006" level="3">
+    <if_sid>876000</if_sid>
+        <field name="netskope.alerts.alert.name" type="pcre2">Bulk Download</field>
+        <description>Alerta Netskope: Download em massa via $(netskope.alerts.app.name)</description>
+    </rule>
+
+    <rule id="876007" level="3">
+    <if_sid>876000</if_sid>
+        <field name="netskope.alerts.activity.name" type="pcre2">Upload</field>
+        <description>Alerta Netskope: Upload de arquivo, detecção DLP via $(netskope.alerts.app.name)</description>
+    </rule>
+    <rule id="876008" level="3">
+    <if_sid>876006</if_sid>
+        <field name="netskope.alerts.dlp.rule.name" type="pcre2">CNPJ</field>
+        <description>Alerta Netskope Upload de arquivo que contém CNPJ, detecção DLP via $(netskope.alerts.app.name)</description>
+    </rule>
+    
+    <rule id="876009" level="3">
+    <if_sid>876000</if_sid>
+       <field name="netskope.events.activity.name" type="pcre2">Introspection Scan</field>
+        <description>Alerta Netskope: Scan de introspecção para detecção de DLP em $(netskope.events.app.name)</description>
+    </rule>
+
+    <rule id="876010" level="3">
+    <if_sid>876000</if_sid>
+        <field name="netskope.alerts.app.name" type="pcre2">Slack</field>
+        <description>Alerta Netskope – Atividade de $(netskope.alerts.activity.name) detectada no Slack, Usuário $(user.email.1).</description>
+    </rule>
+    
+    <rule id="876011" level="3">
+    <if_sid>876000</if_sid>
+        <field name="netskope.alerts.type" type="pcre2">Compromised Credential</field>
+        <description>Alerta Netskope - Detectada credencial comprometida: Usuário $(netskope.alerts.matched.username), fonte: $(netskope.alerts.alert.name). </description> 
+    </rule>
+    
+    <rule id="876012" level="3">
+    <if_sid>876000</if_sid>
+        <field name="netskope.alerts.access_method" type="pcre2">CASB API</field>
+        <description>Alerta Netskope - Violação de política DLP detectada: $(netskope.alerts.alert.name) </description> 
+    </rule>
+    
+    <rule id="876013" level="3">
+    <if_sid>876000</if_sid>
+        <field name="netskope.alerts.type" type="pcre2">malsite</field>
+        <description>Alerta Netskope - Site malicioso detectado: $(netskope.alerts.threat.match.value).</description> 
+    </rule>
+    
+    <rule id="876014" level="3">
+    <if_sid>876000</if_sid>
+        <field name="netskope.alerts.category.name" type="pcre2">Generative AI</field>
+        <description>Alerta Netskope – Atividade generativa de IA detectada: $(netskope.alerts.app.name).</description> 
+    </rule>
+    
+    <rule id="876015" level="3">
+    <if_sid>876000</if_sid>
+        <field name="netskope.alerts.scanner_result" type="pcre2">malicious</field>
+        <description>Alerta Netskope - Malware detectado:  $(netskope.alerts.malware.name) em $(netskope.alerts.page.url).</description> 
+    </rule>
+
+    <rule id="886016" level="9">
+    <if_sid>876000</if_sid>
+        <field name="netskope.events.alert.type" type="pcre2">Malware</field>
+    <description>Alerta Netskope: Site bloqueado, politica violada. Usuário $(user.email.2) tentou acessar possivél site comprometido $(netskope.events.app.name).</description>
+    </rule>
+    
+    <rule id="876017" level="3">
+    <if_sid>876000</if_sid>
+        <field name="netskope.events.activity.name" type="pcre2">Upload</field>
+        <description>Alerta Netskope: Upload de arquivo, detecção DLP via $(netskope.events.app.name), arquivo: $(netskope.events.object.name)</description>
+    </rule>
+    
+    <rule id="876018" level="3">
+    <if_sid>876000</if_sid>
+        <field name="netskope.events.alert.type" type="pcre2">DLP</field>
+        <description>Alerta Netskope: possivél violação da politica $(netskope.events.policy.name), Usuário $(user.email.2)</description>
+    </rule>
+</group>
