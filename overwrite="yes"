@@ -1,0 +1,10 @@
+<group name="forti,">
+    <rule id="81633" level="3" overwrite="yes"> <!--O  overwrite server para alterar regras padrão do wazuh-->
+        <if_sid>81603</if_sid>
+        <match>subtype="app-ctrl"|subtype=app-ctrl</match>
+        <action>pass</action>
+    <description>$(appcat) O dispositivo na rede interna IP: "$(srcip)" realizou uma requisição "$(service)" para outro dispositivo: "$(dstip)", utilizando a política de firewall "$(policyid)". A aplicação detectada foi "$(msg)". O tráfego foi "$(action)"$(agent).</description>
+        <group>gdpr_IV_35.7.d,hipaa_164.312.b,nist_800_53_AU.6,pci_dss_10.6.1,</group>
+    </rule>
+ 
+</group>
