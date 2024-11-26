@@ -552,3 +552,24 @@
     
     
 </group>
+
+
+{"kind":"admin#reports#activity","etag":"\"wD115YF_HW4i8weSLx4wCv_nc4SxLAQ9b3qyTPKZdNI/FquPaG442igDdkMUMoEPzSqQsVA\"","actor":{"email":"leticia.serpa@nomadglobal.com","profileId":"111069353967986188524"},"ipAddress":"31.186.239.133","type":"auth","name":"activity","api_name":"drive","method_name":"drive.changes.list","client_id":"1055677045599-0pc89ttk1be2mi3h5o9krtfi7sq4m2t1.apps.googleusercontent.com","product_bucket":"DRIVE","app_name":"Netskope","client_type":"WEB","time":"2024-08-06T08:28:51.019Z","uniqueQualifier":"-1234857539706229653","applicationName":"token","customerId":"C029tmng5","service":"token"}
+
+<rule id="890041" level="3">
+        <if_sid>890000</if_sid>        
+	<field name="name">^activity</field>
+        <field name="type">auth</field>
+        <field name="service">token</field>
+        <description>Google workspace: O usuário com o e-mail: $(data.actor.email)fez uma solicitação à API do Google Drive para listar as alterações $(method_name) usando um cliente web identificado pela aplicação Netskope.</description>
+
+    </rule>
+  <rule id="890042" level="3">
+        <if_sid>890000</if_sid>
+        <field name="name">^authorize</field>
+        <field name="type">auth</field>
+        <field name="service">token</field>
+        <description>Google workspace: O e-mail $(actor.email) fez uma solicitação de autorização para a API do Google Drive usando um cliente web identificado pela aplicação Netskope. A solicitação incluiu o escopo $(data.scope
+), que permite acesso ao Google Drive.</description>
+    </rule>
+
